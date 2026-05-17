@@ -296,10 +296,14 @@ function createBooking_(b) {
     'confirmed'
   ]);
 
-  try { sendEmails_(b, bookingId); } catch (e) {
-    Logger.log('Email send failed: ' + e.message);
+  let emailWarning = null;
+  try {
+    sendEmails_(b, bookingId);
+  } catch (e) {
+    emailWarning = e.message || String(e);
+    Logger.log('Email send failed: ' + emailWarning);
   }
-  return { ok: true, bookingId: bookingId };
+  return { ok: true, bookingId: bookingId, emailWarning: emailWarning };
 }
 
 function cancelBooking_(bookingId) {
@@ -484,6 +488,70 @@ function sendEmails_(b, bookingId) {
 function setup() {
   ensureSetup_();
   return 'OK · sheet ready · ' + getSheetUrl_();
+}
+
+/**
+ * RUN THIS ONCE from the editor (after `setup`) to grant Gmail send permission.
+ * Sends a single test email to CONFIG.businessEmail.
+ * If you skip this, the booking endpoint will succeed but emails won't be sent
+ * because Apps Script never requested the MailApp scope.
+ */
+function enableEmail() {
+  MailApp.sendEmail({
+    to: CONFIG.businessEmail,
+    subject: '✿ ' + CONFIG.businessName + ' — e-mail teszt',
+    htmlBody: '<div style="font-family:Georgia,serif;color:#2a1822;max-width:480px;margin:0 auto;padding:24px;">' +
+              '<h2 style="font-family:Georgia,serif;font-weight:400;color:#a4615c;">Sikeres e-mail teszt ✿</h2>' +
+              '<p>Ez azt jelenti, hogy a foglalási rendszer mostantól valódi visszaigazoló e-maileket fog küldeni neked és a vendégeidnek.</p>' +
+              '<p style="color:#8e7680;font-size:13px;margin-top:24px;font-style:italic;">— Alice Beauty Studio booking system</p>' +
+              '</div>',
+    name: CONFIG.businessName
+  });
+  return 'Teszt e-mail elküldve: ' + CONFIG.businessEmail + ' — nézd meg az Inboxot (vagy Spam mappát).';
+}
+
+/**
+ * One-time cleanup: removes duplicate (date|time) rows from the Slots sheet,
+ * keeping the row with the highest-priority status (booked > free).
+ */
+function dedupeSlots() {
+  const sh = sheet_(SHEET_SLOTS);
+  const data = sh.getDataRange().getValues();
+  const seen = {};   // key -> { row, status, bookingId }
+  const dups = [];   // rows to delete
+
+  for (let i = 1; i < data.length; i++) {
+    const date = asDateStr_(data[i][0]);
+    const time = asTimeStr_(data[i][1]);
+    if (!date || !time) { dups.push(i + 1); continue; }
+    const key = date + '|' + time;
+    const status = String(data[i][2] || 'free');
+    const bid = String(data[i][3] || '');
+
+    if (!seen[key]) {
+      seen[key] = { row: i + 1, status: status, bid: bid };
+      continue;
+    }
+    // Decide which to keep: real bookings > manual > free; older row loses tie
+    const prev = seen[key];
+    const prevPriority = prev.status === 'booked' && prev.bid && prev.bid !== 'manual' ? 3
+      : prev.status === 'booked' ? 2 : 1;
+    const newPriority = status === 'booked' && bid && bid !== 'manual' ? 3
+      : status === 'booked' ? 2 : 1;
+    if (newPriority > prevPriority) {
+      dups.push(prev.row);
+      seen[key] = { row: i + 1, status: status, bid: bid };
+    } else {
+      dups.push(i + 1);
+    }
+  }
+
+  if (!dups.length) return { removed: 0, kept: Object.keys(seen).length };
+
+  // Delete from bottom up so row indices stay valid
+  dups.sort(function(a, b) { return b - a; });
+  dups.forEach(function(r) { sh.deleteRow(r); });
+  return { removed: dups.length, kept: Object.keys(seen).length };
 }
 
 function ensureSetup_() {

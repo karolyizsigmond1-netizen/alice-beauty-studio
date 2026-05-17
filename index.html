@@ -1402,6 +1402,7 @@
         state.submitting = false;
         state.bookingId = res.bookingId;
         state.demoOnly = !!res.demo;
+        state.emailWarning = res.emailWarning || null;
         renderSummary();
         setStep(5);
         // mark slot taken locally so calendar reflects it
@@ -1431,9 +1432,13 @@
         d.innerHTML = '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
         summary.appendChild(d);
       });
-      confirmSub.innerHTML = state.demoOnly
-        ? '<b>Demo mód:</b> e-mail nem ment ki — ha a backend csatlakozik, élesben mindkét fél kap visszaigazolót.'
-        : 'Megerősítő e-mailt küldök <b>' + state.email + '</b> címre 5 percen belül.';
+      if (state.demoOnly) {
+        confirmSub.innerHTML = '<b>Demo mód:</b> e-mail nem ment ki — ha a backend csatlakozik, élesben mindkét fél kap visszaigazolót.';
+      } else if (state.emailWarning) {
+        confirmSub.innerHTML = '⚠ A foglalás rögzítve, de az e-mail küldés sikertelen volt:<br/><code style="font-size:12px;color:#b6463f;">' + state.emailWarning + '</code><br/><br/>Futtasd az Apps Script editorban az <b>enableEmail</b> függvényt, hogy a Gmail-küldés jogosultság megkapja.';
+      } else {
+        confirmSub.innerHTML = 'Megerősítő e-mailt küldök <b>' + state.email + '</b> címre — érkezhet a Spam mappába is, érdemes ott is megnézni.';
+      }
     }
 
     // ─── Close handlers ───
