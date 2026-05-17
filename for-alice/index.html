@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Időpontfoglalás — Alice Beauty Studio</title>
+<meta name="description" content="Foglalj időpontot az Alice Beauty Studio-ba — fodrászat, smink, alkalmi frizura. Budapest, Zugló.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* =============================================================
+   ALICE BEAUTY STUDIO — APPOINTMENT SETTER
+   Designed to blend with alicebeautystudio.hu:
+   white background, clean sans-serif, soft warm gold accent,
+   generous whitespace, restrained professional aesthetic.
+============================================================= */
+
+:root {
+  --bg: #ffffff;
+  --bg-soft: #fafaf8;
+  --bg-card: #ffffff;
+  --ink: #2a2826;
+  --ink-soft: #5a5856;
+  --ink-mute: #8a8782;
+  --line: #e9e6e0;
+  --line-soft: #f1efe9;
+  --gold: #b8956b;          /* warm muted gold accent */
+  --gold-dark: #8e7048;
+  --gold-soft: #f4ede0;
+  --ok: #6f8a5f;
+  --bad: #b25b53;
+  --shadow: 0 4px 20px rgba(42, 40, 38, 0.06);
+  --shadow-lift: 0 12px 40px rgba(42, 40, 38, 0.10);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+}
+
+/* ===== PAGE FRAME ===== */
+.page {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+@media (max-width: 640px) { .page { padding: 32px 16px 60px; } }
+
+/* ===== HEADER (matches the site's understated nav vibe) ===== */
+.page-head {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.page-head .kicker {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+.page-head h1 {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 300;
+  font-size: clamp(26px, 4vw, 36px);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+.page-head h1 strong { font-weight: 600; }
+.page-head p {
+  color: var(--ink-soft);
+  font-size: 15px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.divider {
+  width: 40px;
+  height: 1px;
+  background: var(--gold);
+  margin: 24px auto 0;
+}
+
+/* ===== STEPPER ===== */
+.stepper {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin: 0 auto 32px;
+  max-width: 580px;
+  padding: 0 16px;
+  position: relative;
+}
+.stepper::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 16%;
+  right: 16%;
+  height: 1px;
+  background: var(--line);
+  z-index: 0;
+}
+.step {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.step__bullet {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-mute);
+  transition: all 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.step__label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 500;
+  transition: color 0.3s;
+}
+.step.is-done .step__bullet { background: var(--gold); border-color: var(--gold); color: white; }
+.step.is-done .step__label { color: var(--gold-dark); }
+.step.is-current .step__bullet { background: var(--ink); border-color: var(--ink); color: white; transform: scale(1.08); }
+.step.is-current .step__label { color: var(--ink); font-weight: 600; }
+@media (max-width: 540px) {
+  .step__label { font-size: 10px; }
+  .stepper::before { left: 12%; right: 12%; }
+}
+
+/* ===== CARD ===== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.card__body { padding: 40px; }
+.card__head {
+  padding: 32px 40px 0;
+}
+.card__title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+.card__sub {
+  color: var(--ink-soft);
+  font-size: 14px;
+  margin-bottom: 28px;
+}
+.card__foot {
+  padding: 20px 40px;
+  border-top: 1px solid var(--line-soft);
+  background: var(--bg-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.card__foot-meta {
+  flex: 1;
+  font-size: 13px;
+  color: var(--ink-soft);
+  text-align: center;
+}
+.card__foot-meta b { color: var(--ink); font-weight: 600; }
+@media (max-width: 640px) {
+  .card__body { padding: 28px 20px; }
+  .card__head { padding: 24px 20px 0; }
+  .card__foot { padding: 16px 20px; flex-wrap: wrap; }
+  .card__foot-meta { order: -1; flex-basis: 100%; text-align: left; }
+}
+
+/* ===== PANES ===== */
+.pane { display: none; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.pane.is-on { display: block; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== SERVICES GRID ===== */
+.services {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 560px) { .services { grid-template-columns: 1fr; } }
+.svc {
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 20px 22px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: inherit;
+  position: relative;
+}
+.svc:hover { border-color: var(--gold); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(184, 149, 107, 0.12); }
+.svc.is-selected { border-color: var(--ink); background: var(--bg-soft); }
+.svc.is-selected .svc__check { opacity: 1; transform: scale(1); }
+.svc__check {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.svc__check svg { width: 12px; height: 12px; }
+.svc__feature {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-dark);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.svc__name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  padding-right: 24px;
+}
+.svc__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+.svc__meta .dot { color: var(--gold); }
+.svc__price { color: var(--ink); font-weight: 500; }
+
+/* ===== CALENDAR ===== */
+.calendar {
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 24px;
+}
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.cal-nav {
+  width: 32px; height: 32px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+  transition: all 0.25s;
+}
+.cal-nav:hover { background: var(--ink); color: white; border-color: var(--ink); }
+.cal-nav svg { width: 14px; height: 14px; }
+.cal-title { font-size: 16px; font-weight: 600; color: var(--ink); letter-spacing: 0.01em; }
+.cal-dows { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-bottom: 6px; }
+.cal-dows span {
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  padding: 8px 0;
+  font-weight: 600;
+}
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+.cal-day {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.25s;
+  font-family: inherit;
+  font-weight: 400;
+}
+.cal-day:hover:not(.is-empty):not(.is-disabled) {
+  background: var(--gold-soft);
+  border-color: var(--gold);
+}
+.cal-day.is-empty { cursor: default; }
+.cal-day.is-disabled { color: var(--line); cursor: not-allowed; }
+.cal-day.is-today { font-weight: 700; color: var(--gold-dark); }
+.cal-day.is-today::after {
+  content: '';
+  position: absolute;
+  width: 4px; height: 4px;
+  background: var(--gold);
+  border-radius: 50%;
+  margin-top: 24px;
+}
+.cal-day.is-selected { background: var(--ink); color: white; border-color: var(--ink); }
+.cal-day.is-selected.is-today { color: white; }
+
+/* ===== TIMES ===== */
+.times {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+.time {
+  padding: 13px 8px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  transition: all 0.25s;
+}
+.time:hover { border-color: var(--gold); background: var(--gold-soft); }
+.time.is-taken {
+  color: var(--line);
+  background: var(--bg-soft);
+  cursor: not-allowed;
+  text-decoration: line-through;
+  text-decoration-color: var(--ink-mute);
+}
+.time.is-taken:hover { border-color: var(--line); background: var(--bg-soft); }
+.time.is-selected { background: var(--ink); color: white; border-color: var(--ink); }
+
+.times-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--ink-mute);
+  font-size: 14px;
+}
+
+/* ===== FORM ===== */
+.form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+@media (max-width: 560px) { .form { grid-template-columns: 1fr; } }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field--full { grid-column: 1 / -1; }
+.field label {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 600;
+}
+.field label .opt {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  color: var(--line);
+  margin-left: 6px;
+  font-size: 12px;
+}
+.field input,
+.field textarea {
+  padding: 12px 14px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.25s, background 0.25s;
+}
+.field input::placeholder,
+.field textarea::placeholder { color: var(--ink-mute); }
+.field input:focus,
+.field textarea:focus { border-color: var(--gold); background: var(--bg); }
+
+/* ===== BUTTONS ===== */
+.btn {
+  padding: 12px 24px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+}
+.btn--primary { background: var(--ink); color: white; border-color: var(--ink); }
+.btn--primary:hover:not(:disabled) { background: var(--gold-dark); border-color: var(--gold-dark); }
+.btn--primary:disabled { background: var(--line); border-color: var(--line); cursor: not-allowed; }
+.btn--ghost { background: transparent; color: var(--ink-soft); border-color: var(--line); }
+.btn--ghost:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
+.btn--ghost:disabled { opacity: 0; pointer-events: none; }
+
+/* ===== CONFIRMATION ===== */
+.confirm { text-align: center; padding: 24px 0; }
+.confirm__icon {
+  width: 64px; height: 64px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  display: grid;
+  place-items: center;
+  color: var(--gold-dark);
+  animation: pop 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+.confirm__icon svg { width: 28px; height: 28px; }
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+.confirm h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+.confirm p { color: var(--ink-soft); font-size: 14px; max-width: 380px; margin: 0 auto 24px; }
+.confirm p b { color: var(--ink); }
+
+.summary {
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 20px 24px;
+  max-width: 420px;
+  margin: 0 auto 24px;
+  text-align: left;
+}
+.summary__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.summary__row:last-child { border-bottom: none; }
+.summary__row dt {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 600;
+}
+.summary__row dd {
+  font-size: 14px;
+  color: var(--ink);
+  font-weight: 500;
+  text-align: right;
+}
+
+.confirm__note {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--ink-mute);
+  font-style: italic;
+}
+
+/* ===== PAGE FOOTER (matches site's understated style) ===== */
+.page-foot {
+  margin-top: 48px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-mute);
+  letter-spacing: 0.04em;
+}
+.page-foot a { color: var(--gold-dark); text-decoration: none; }
+.page-foot a:hover { color: var(--gold); }
+.page-foot .sep { color: var(--line); margin: 0 8px; }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <header class="page-head">
+    <span class="kicker">Alice Beauty Studio</span>
+    <h1>Foglalj <strong>időpontot</strong></h1>
+    <p>Egyszemélyes szépségstúdió Budapest, Zugló kerületében. Válaszd ki a szolgáltatást és a számodra ideális időpontot.</p>
+    <div class="divider"></div>
+  </header>
+
+  <!-- STEPPER -->
+  <div class="stepper" id="stepper">
+    <div class="step is-current" data-step="1">
+      <div class="step__bullet">1</div>
+      <div class="step__label">Szolgáltatás</div>
+    </div>
+    <div class="step" data-step="2">
+      <div class="step__bullet">2</div>
+      <div class="step__label">Dátum</div>
+    </div>
+    <div class="step" data-step="3">
+      <div class="step__bullet">3</div>
+      <div class="step__label">Időpont</div>
+    </div>
+    <div class="step" data-step="4">
+      <div class="step__bullet">4</div>
+      <div class="step__label">Adatok</div>
+    </div>
+  </div>
+
+  <!-- CARD -->
+  <div class="card">
+    <div class="card__head" id="cardHead">
+      <h2 class="card__title" id="cardTitle">Válaszd ki a szolgáltatást</h2>
+      <p class="card__sub" id="cardSub">A folyamat néhány másodpercet vesz igénybe — szolgáltatás, nap, idő, adatok.</p>
+    </div>
+
+    <div class="card__body">
+
+      <!-- STEP 1: SERVICE -->
+      <section class="pane is-on" data-pane="1">
+        <div class="services" id="svcGrid">
+          <button class="svc" data-svc="hajfestes" data-duration="120" data-price="26 000 Ft-tól">
+            <span class="svc__name">Hajfestés &amp; balayage</span>
+            <div class="svc__meta">
+              <span>90–180 perc</span>
+              <span class="dot">·</span>
+              <span class="svc__price">26 000 Ft-tól</span>
+            </div>
+            <span class="svc__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+          </button>
+          <button class="svc" data-svc="alkalmi" data-duration="90" data-price="22 000 Ft-tól">
+            <span class="svc__feature">★ Legkeresettebb</span>
+            <span class="svc__name">Alkalmi konty &amp; smink</span>
+            <div class="svc__meta">
+              <span>60–120 perc</span>
+              <span class="dot">·</span>
+              <span class="svc__price">22 000 Ft-tól</span>
+            </div>
+            <span class="svc__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+          </button>
+          <button class="svc" data-svc="keratin" data-duration="120" data-price="32 000 Ft-tól">
+            <span class="svc__name">Keratinos kezelés</span>
+            <div class="svc__meta">
+              <span>120 perc</span>
+              <span class="dot">·</span>
+              <span class="svc__price">32 000 Ft-tól</span>
+            </div>
+            <span class="svc__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+          </button>
+          <button class="svc" data-svc="vagas" data-duration="60" data-price="9 000 Ft-tól">
+            <span class="svc__name">Hajvágás &amp; formázás</span>
+            <div class="svc__meta">
+              <span>45–60 perc</span>
+              <span class="dot">·</span>
+              <span class="svc__price">9 000 Ft-tól</span>
+            </div>
+            <span class="svc__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+          </button>
+          <button class="svc" data-svc="konty" data-duration="90" data-price="18 000 Ft-tól">
+            <span class="svc__name">Klasszikus konty</span>
+            <div class="svc__meta">
+              <span>75 perc</span>
+              <span class="dot">·</span>
+              <span class="svc__price">18 000 Ft-tól</span>
+            </div>
+            <span class="svc__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+          </button>
+          <button class="svc" data-svc="konzultacio" data-duration="30" data-price="díjmentes">
+            <span class="svc__name">Konzultáció</span>
+            <div class="svc__meta">
+              <span>30 perc</span>
+              <span class="dot">·</span>
+              <span class="svc__price">díjmentes</span>
+            </div>
+            <span class="svc__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+          </button>
+        </div>
+      </section>
+
+      <!-- STEP 2: DATE -->
+      <section class="pane" data-pane="2">
+        <div class="calendar">
+          <div class="cal-head">
+            <button class="cal-nav" id="calPrev" type="button" aria-label="Előző hónap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="cal-title" id="calTitle"></div>
+            <button class="cal-nav" id="calNext" type="button" aria-label="Következő hónap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="cal-dows">
+            <span>H</span><span>K</span><span>Sze</span><span>Cs</span><span>P</span><span>Szo</span><span>V</span>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+      </section>
+
+      <!-- STEP 3: TIME -->
+      <section class="pane" data-pane="3">
+        <div class="times" id="timeGrid"></div>
+      </section>
+
+      <!-- STEP 4: DETAILS -->
+      <section class="pane" data-pane="4">
+        <form class="form" id="form" novalidate>
+          <div class="field">
+            <label for="fName">Név</label>
+            <input type="text" id="fName" name="name" required placeholder="Kovács Eszter" autocomplete="name"/>
+          </div>
+          <div class="field">
+            <label for="fPhone">Telefon</label>
+            <input type="tel" id="fPhone" name="phone" required placeholder="+36 20 ..." autocomplete="tel"/>
+          </div>
+          <div class="field field--full">
+            <label for="fEmail">E-mail</label>
+            <input type="email" id="fEmail" name="email" required placeholder="te@example.com" autocomplete="email"/>
+          </div>
+          <div class="field field--full">
+            <label for="fNote">Megjegyzés <span class="opt">opcionális</span></label>
+            <textarea id="fNote" name="note" rows="3" placeholder="Pl. esküvőhöz, hajhossz, allergia, kérés..."></textarea>
+          </div>
+        </form>
+      </section>
+
+      <!-- STEP 5: CONFIRMATION -->
+      <section class="pane" data-pane="5">
+        <div class="confirm">
+          <div class="confirm__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <h2>Köszönöm a foglalást!</h2>
+          <p id="confirmEmail">Megerősítő e-mailt küldök rövidesen.</p>
+          <dl class="summary" id="summary"></dl>
+          <p class="confirm__note">Ha módosítani szeretnél, hívj a +36 20 547 3128 számon.</p>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="card__foot">
+      <button class="btn btn--ghost" id="backBtn" type="button" disabled>← Vissza</button>
+      <div class="card__foot-meta" id="footMeta">Válassz egy szolgáltatást</div>
+      <button class="btn btn--primary" id="nextBtn" type="button" disabled>Tovább →</button>
+    </div>
+  </div>
+
+  <footer class="page-foot">
+    <span>Alice Beauty Studio</span>
+    <span class="sep">·</span>
+    <span>1143 Budapest, Gizella út 35. II. emelet</span>
+    <span class="sep">·</span>
+    <a href="tel:+36205473128">+36 20 547 3128</a>
+    <span class="sep">·</span>
+    <a href="mailto:alice1174@gmail.com">alice1174@gmail.com</a>
+  </footer>
+
+</div>
+
+<script>
+(function() {
+  var MONTHS = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
+  var DAYS_HU = ['Vasárnap','Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat'];
+
+  var state = {
+    step: 1,
+    service: null, serviceName: null, servicePrice: null, serviceDuration: 60,
+    date: null, dateLabel: null,
+    time: null,
+    name: '', phone: '', email: '', note: '',
+    viewMonth: new Date()
+  };
+
+  var $ = function(id) { return document.getElementById(id); };
+  var nextBtn = $('nextBtn'), backBtn = $('backBtn'), footMeta = $('footMeta');
+  var cardTitle = $('cardTitle'), cardSub = $('cardSub');
+  var calTitle = $('calTitle'), calGrid = $('calGrid');
+  var timeGrid = $('timeGrid');
+  var form = $('form');
+  var summaryEl = $('summary'), confirmEmail = $('confirmEmail');
+  var steps = document.querySelectorAll('.step');
+  var panes = document.querySelectorAll('.pane');
+
+  // ── STEP HEADINGS ──
+  var HEADINGS = {
+    1: { title: 'Válaszd ki a szolgáltatást', sub: 'A folyamat néhány másodpercet vesz igénybe — szolgáltatás, nap, idő, adatok.' },
+    2: { title: 'Mikor szeretnéd?',           sub: 'Válassz egy napot a naptárból. Vasárnap és múltbeli napok nem foglalhatók.' },
+    3: { title: 'Melyik időpont a legjobb?',  sub: 'A választott naphoz tartozó szabad időpontok.' },
+    4: { title: 'Add meg az adataidat',       sub: 'A foglaláshoz név, telefon és e-mail szükséges. Semmi spam, ígérem.' },
+    5: { title: 'Foglalás megerősítve',       sub: 'A részleteket e-mailben is elküldöm. Várlak a stúdióban.' }
+  };
+
+  function setStep(n) {
+    state.step = n;
+    panes.forEach(function(p) { p.classList.toggle('is-on', +p.dataset.pane === n); });
+    steps.forEach(function(s) {
+      var sn = +s.dataset.step;
+      s.classList.toggle('is-current', sn === n);
+      s.classList.toggle('is-done', sn < n);
+    });
+    cardTitle.textContent = HEADINGS[n].title;
+    cardSub.textContent = HEADINGS[n].sub;
+    backBtn.disabled = n <= 1 || n >= 5;
+    nextBtn.textContent = n === 4 ? 'Foglalás megerősítése' : (n === 5 ? 'Kész' : 'Tovább →');
+    if (n === 5) { backBtn.style.visibility = 'hidden'; nextBtn.disabled = false; }
+    else { backBtn.style.visibility = 'visible'; }
+    updateMeta();
+    updateNextState();
+    if (n === 2) renderCalendar();
+    if (n === 3) renderTimes();
+  }
+
+  function updateMeta() {
+    if (state.step === 5) { footMeta.innerHTML = 'Visszaigazoló e-mail úton'; return; }
+    var parts = [];
+    if (state.serviceName) parts.push('<b>' + state.serviceName + '</b>');
+    if (state.dateLabel) parts.push(state.dateLabel);
+    if (state.time) parts.push(state.time);
+    if (!parts.length) {
+      footMeta.innerHTML = ['Válassz egy szolgáltatást','Válassz egy napot','Válassz egy időpontot','Add meg az adataidat'][state.step - 1];
+    } else footMeta.innerHTML = parts.join(' · ');
+  }
+  function updateNextState() {
+    if (state.step === 5) { nextBtn.disabled = false; return; }
+    if (state.step === 1) nextBtn.disabled = !state.service;
+    else if (state.step === 2) nextBtn.disabled = !state.date;
+    else if (state.step === 3) nextBtn.disabled = !state.time;
+    else if (state.step === 4) nextBtn.disabled = !formValid();
+    else nextBtn.disabled = false;
+  }
+  function formValid() {
+    var fd = new FormData(form);
+    var n = (fd.get('name')||'').toString().trim();
+    var p = (fd.get('phone')||'').toString().trim();
+    var e = (fd.get('email')||'').toString().trim();
+    return n.length >= 2 && p.length >= 6 && /.+@.+\..+/.test(e);
+  }
+
+  // ── SERVICE PICKER ──
+  document.querySelectorAll('.svc').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.svc').forEach(function(b) { b.classList.remove('is-selected'); });
+      btn.classList.add('is-selected');
+      state.service = btn.dataset.svc;
+      state.serviceName = btn.querySelector('.svc__name').textContent.trim();
+      state.servicePrice = btn.dataset.price;
+      state.serviceDuration = parseInt(btn.dataset.duration, 10) || 60;
+      state.time = null;
+      updateMeta(); updateNextState();
+    });
+  });
+
+  // ── CALENDAR ──
+  function isoDate(d) {
+    return d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+  function parseIso(s) { return new Date(s + 'T00:00:00'); }
+
+  function renderCalendar() {
+    var v = state.viewMonth;
+    var year = v.getFullYear(), month = v.getMonth();
+    calTitle.textContent = MONTHS[month] + ' ' + year;
+    var first = new Date(year, month, 1);
+    var offset = (first.getDay() + 6) % 7;
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
+    var today = new Date(); today.setHours(0,0,0,0);
+    var todayStr = isoDate(today);
+
+    calGrid.innerHTML = '';
+    for (var i = 0; i < offset; i++) {
+      var em = document.createElement('div'); em.className = 'cal-day is-empty'; calGrid.appendChild(em);
+    }
+    for (var d = 1; d <= daysInMonth; d++) {
+      var dt = new Date(year, month, d);
+      var iso = isoDate(dt);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cal-day';
+      btn.textContent = d;
+      var isPast = dt < today;
+      var isSunday = dt.getDay() === 0;
+      if (isPast || isSunday) btn.classList.add('is-disabled');
+      if (iso === todayStr) btn.classList.add('is-today');
+      if (state.date === iso) btn.classList.add('is-selected');
+      (function(dateIso, dt, blocked) {
+        btn.addEventListener('click', function() {
+          if (blocked) return;
+          state.date = dateIso;
+          state.dateLabel = DAYS_HU[dt.getDay()] + ', ' + MONTHS[dt.getMonth()] + ' ' + dt.getDate() + '.';
+          state.time = null;
+          renderCalendar();
+          updateMeta(); updateNextState();
+        });
+      })(iso, dt, isPast || isSunday);
+      calGrid.appendChild(btn);
+    }
+  }
+  $('calPrev').addEventListener('click', function() {
+    state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() - 1, 1);
+    renderCalendar();
+  });
+  $('calNext').addEventListener('click', function() {
+    state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() + 1, 1);
+    renderCalendar();
+  });
+
+  // ── TIME SLOTS ──
+  function renderTimes() {
+    timeGrid.innerHTML = '';
+    var date = parseIso(state.date);
+    var isSat = date.getDay() === 6;
+    var pool = isSat
+      ? ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30']
+      : ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
+
+    // demo "taken" pattern (deterministic from date)
+    var seed = date.getDate() + date.getMonth() * 31;
+    var slotsNeeded = Math.max(1, Math.ceil(state.serviceDuration / 30));
+    // Find valid starts: where N consecutive slots are free
+    var freeSet = {};
+    pool.forEach(function(t, i) {
+      var taken = (seed * 7 + i * 13) % 5 === 0 || (seed + i) % 11 === 0;
+      if (!taken) freeSet[t] = true;
+    });
+    var validStarts = pool.filter(function(start) {
+      var parts = start.split(':');
+      var mins = parseInt(parts[0],10)*60 + parseInt(parts[1]||'0',10);
+      for (var k = 0; k < slotsNeeded; k++) {
+        var h = Math.floor(mins/60), m = mins%60;
+        var t = ('0'+h).slice(-2) + ':' + ('0'+m).slice(-2);
+        if (!freeSet[t]) return false;
+        mins += 30;
+      }
+      return true;
+    });
+
+    if (!validStarts.length) {
+      timeGrid.innerHTML = '<div class="times-empty">Erre a napra nincs ' + state.serviceDuration + ' perces szabad sáv.<br/>Válassz másik napot vagy rövidebb szolgáltatást.</div>';
+      return;
+    }
+    validStarts.forEach(function(t) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'time';
+      b.textContent = t;
+      if (state.time === t) b.classList.add('is-selected');
+      b.addEventListener('click', function() {
+        state.time = t;
+        renderTimes();
+        updateMeta(); updateNextState();
+      });
+      timeGrid.appendChild(b);
+    });
+  }
+
+  // ── FORM ──
+  form.addEventListener('input', function() {
+    var fd = new FormData(form);
+    state.name = (fd.get('name')||'').toString().trim();
+    state.phone = (fd.get('phone')||'').toString().trim();
+    state.email = (fd.get('email')||'').toString().trim();
+    state.note = (fd.get('note')||'').toString().trim();
+    updateNextState();
+  });
+
+  // ── NAV ──
+  nextBtn.addEventListener('click', function() {
+    if (state.step === 5) { location.reload(); return; }
+    if (state.step === 4) { submitBooking(); return; }
+    setStep(state.step + 1);
+  });
+  backBtn.addEventListener('click', function() {
+    if (state.step > 1 && state.step < 5) setStep(state.step - 1);
+  });
+
+  function submitBooking() {
+    nextBtn.disabled = true;
+    nextBtn.textContent = 'Foglalás...';
+    setTimeout(function() {
+      renderSummary();
+      setStep(5);
+    }, 800);
+  }
+
+  function renderSummary() {
+    summaryEl.innerHTML = '';
+    var rows = [
+      ['Szolgáltatás', state.serviceName],
+      ['Időpont', state.dateLabel + ' · ' + state.time],
+      ['Ár', state.servicePrice],
+      ['Név', state.name],
+      ['Telefon', state.phone],
+      ['E-mail', state.email]
+    ];
+    rows.forEach(function(r) {
+      var div = document.createElement('div');
+      div.className = 'summary__row';
+      div.innerHTML = '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+      summaryEl.appendChild(div);
+    });
+    confirmEmail.innerHTML = 'Visszaigazoló e-mail úton a <b>' + state.email + '</b> címre.';
+  }
+})();
+</script>
+
+</body>
+</html>
