@@ -298,6 +298,67 @@
   .section-head .stat { font-size: 13px; color: var(--mute); font-style: italic; font-family: 'Instrument Serif', serif; }
 
   .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--mute); font-style: italic; font-family: 'Instrument Serif', serif; }
+
+  /* SIDE TABS in day pane */
+  .side-tabs {
+    display: flex; gap: 4px; margin-bottom: 18px;
+    background: var(--blush); padding: 4px; border-radius: 100px;
+  }
+  .side-tab {
+    flex: 1; padding: 8px 12px; font-size: 12px; font-weight: 500; letter-spacing: 0.04em;
+    border-radius: 100px; cursor: pointer; color: var(--mute);
+    transition: all 0.3s; background: transparent; border: none; font-family: inherit;
+  }
+  .side-tab.is-on { background: var(--plum); color: var(--paper); }
+
+  .side-panel { display: none; }
+  .side-panel.is-on { display: block; animation: fade .35s ease; }
+
+  /* ALL slots flat list */
+  .all-search {
+    display: flex; gap: 8px; align-items: center; margin-bottom: 14px;
+  }
+  .all-search input {
+    flex: 1; padding: 9px 14px; background: var(--blush); border: 1px solid var(--line); border-radius: 8px;
+    font-family: inherit; font-size: 13px; color: var(--plum); outline: none;
+  }
+  .all-search input:focus { border-color: var(--rose-deep); background: #fff; }
+  .all-count {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--mute); font-weight: 500;
+    background: var(--blush); padding: 6px 10px; border-radius: 100px;
+    white-space: nowrap;
+  }
+  .all-list {
+    max-height: 540px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 4px;
+    margin: 0 -4px; padding: 0 4px;
+  }
+  .all-list::-webkit-scrollbar { width: 5px; }
+  .all-list::-webkit-scrollbar-thumb { background: rgba(42,24,34,0.15); border-radius: 4px; }
+  .all-group {
+    background: var(--blush); border-radius: 8px; padding: 10px 14px;
+    margin-bottom: 4px;
+  }
+  .all-group__date {
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--rose-deep); font-weight: 600; margin-bottom: 6px;
+    font-family: 'Schibsted Grotesk', sans-serif;
+  }
+  .all-group__date b { font-family: 'DM Serif Display', serif; font-size: 14px; color: var(--plum); letter-spacing: 0; text-transform: none; font-weight: 400; margin-right: 6px; }
+  .all-times { display: flex; gap: 5px; flex-wrap: wrap; }
+  .all-time {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; padding: 4px 9px; border-radius: 100px;
+    background: var(--paper); color: var(--plum); cursor: pointer;
+    border: 1px solid var(--line); transition: all 0.25s;
+    font-family: inherit; font-weight: 500;
+  }
+  .all-time:hover { border-color: var(--rose-deep); background: rgba(196,132,127,0.1); }
+  .all-time.x { background: rgba(164,97,92,0.15); color: var(--rose-deep); border-color: transparent; }
+  .all-time.x:hover { background: rgba(164,97,92,0.25); }
+  .all-time.m { background: rgba(192,133,43,0.15); color: var(--warn); border-color: transparent; }
+  .all-time .badge { font-size: 9px; opacity: 0.7; }
 </style>
 </head>
 <body>
@@ -378,32 +439,49 @@
         </div>
 
         <div class="card day-pane" id="dayPane">
-          <div class="day-pane-empty" id="dayEmpty">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
-            <div>Bal oldalt koppints egy napra,<br/>és itt látod az időpontjait.</div>
+          <div class="side-tabs">
+            <button class="side-tab is-on" data-side="day">Kiválasztott nap</button>
+            <button class="side-tab" data-side="all">Összes (lista)</button>
           </div>
 
-          <div id="dayContent" style="display:none">
-            <h3 id="dayTitle"></h3>
-            <div class="day-sub" id="daySub"></div>
-
-            <div class="add-row">
-              <input type="time" id="addTime" step="900" />
-              <button class="btn" id="addBtn">+ Hozzáad</button>
+          <div class="side-panel is-on" data-side="day">
+            <div class="day-pane-empty" id="dayEmpty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+              <div>Bal oldalt koppints egy napra,<br/>és itt látod az időpontjait.<br/><br/>Vagy nyomd meg az <b>Összes (lista)</b> fület<br/>ha az összes időpontot szeretnéd látni.</div>
             </div>
 
-            <div class="quick-row">
-              <button class="chip" data-preset="standard" title="9, 10, 11, 12, 13, 14, 15, 16, 17">+ Hétköznap (9–17)</button>
-              <button class="chip" data-preset="morning">+ Délelőtt (9–12)</button>
-              <button class="chip" data-preset="afternoon">+ Délután (13–17)</button>
-              <button class="chip" data-preset="saturday">+ Szombat (9–14)</button>
+            <div id="dayContent" style="display:none">
+              <h3 id="dayTitle"></h3>
+              <div class="day-sub" id="daySub"></div>
+
+              <div class="add-row">
+                <input type="time" id="addTime" step="900" />
+                <button class="btn" id="addBtn">+ Hozzáad</button>
+              </div>
+
+              <div class="quick-row">
+                <button class="chip" data-preset="standard" title="9, 10, 11, 12, 13, 14, 15, 16, 17">+ Hétköznap (9–17)</button>
+                <button class="chip" data-preset="morning">+ Délelőtt (9–12)</button>
+                <button class="chip" data-preset="afternoon">+ Délután (13–17)</button>
+                <button class="chip" data-preset="saturday">+ Szombat (9–14)</button>
+              </div>
+
+              <ul class="slot-list" id="slotList"></ul>
+
+              <div class="day-footer">
+                <span class="day-summary" id="daySummary"></span>
+                <button class="btn btn--ghost" id="clearDayBtn">Mind törlése</button>
+              </div>
             </div>
+          </div>
 
-            <ul class="slot-list" id="slotList"></ul>
-
-            <div class="day-footer">
-              <span class="day-summary" id="daySummary"></span>
-              <button class="btn btn--ghost" id="clearDayBtn">Mind törlése</button>
+          <div class="side-panel" data-side="all">
+            <div class="all-search">
+              <input type="text" id="allSearch" placeholder="Szűrés dátum vagy idő alapján..." />
+              <span class="all-count" id="allCount">—</span>
+            </div>
+            <div class="all-list" id="allList">
+              <div class="empty-state">Betöltés...</div>
             </div>
           </div>
         </div>
@@ -453,6 +531,7 @@
   var bookingsList = $('bookingsList');
   var toastEl = $('toast');
   var autoFillBtn = $('autoFillBtn'), wipeBtn = $('wipeBtn');
+  var allList = $('allList'), allCount = $('allCount'), allSearch = $('allSearch');
 
   // ── HELPERS ──
   function toast(msg, kind) {
@@ -469,12 +548,31 @@
   }
   function parseIso(iso) { return new Date(iso + 'T00:00:00'); }
 
+  // Wraps google.script.run with a 25-second timeout so the UI never hangs.
+  // If the call doesn't return in time, we reject so caller can re-enable buttons.
   function run(fn) {
     var args = Array.prototype.slice.call(arguments, 1);
     return new Promise(function(resolve, reject) {
-      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(null, args);
+      var done = false;
+      var to = setTimeout(function() {
+        if (done) return;
+        done = true;
+        reject(new Error('Időtúllépés — a kérés nem érkezett vissza 25 másodperc alatt. Töltsd újra az oldalt.'));
+      }, 25000);
+      function ok(r) { if (done) return; done = true; clearTimeout(to); resolve(r); }
+      function bad(e) { if (done) return; done = true; clearTimeout(to); reject(e); }
+      try {
+        google.script.run.withSuccessHandler(ok).withFailureHandler(bad)[fn].apply(null, args);
+      } catch (e) {
+        bad(e);
+      }
     });
   }
+
+  // Surface any unhandled JS errors so user sees them instead of silent fail
+  window.addEventListener('error', function(e) {
+    if (toastEl) toast('JS hiba: ' + (e.message || 'ismeretlen'), 'err');
+  });
 
   // ── AUTH ──
   function tryLogin(p) {
@@ -528,17 +626,85 @@
   function loadAll() {
     calMonth.textContent = 'Betöltés...';
     bookingsList.innerHTML = '<div class="loading">Betöltés...</div>';
+    allList.innerHTML = '<div class="empty-state">Betöltés...</div>';
     run('adminGetState').then(function(s) {
       state.slots = s.slots || [];
       state.bookings = s.bookings || [];
       renderCalendar();
       renderBookings();
+      renderAllList();
       updateBanner();
       if (state.selectedDate) renderDayPane();
     }).catch(function(e) {
-      toast('Betöltési hiba: ' + (e.message || e), 'err');
+      var msg = 'Betöltési hiba: ' + (e.message || e);
+      toast(msg, 'err');
+      calMonth.textContent = '⚠';
+      allList.innerHTML = '<div class="empty-state" style="color:#b6463f;">' + msg + '</div>';
     });
   }
+
+  // SIDE TABS (day vs all)
+  document.querySelectorAll('.side-tab').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.side-tab').forEach(function(t) { t.classList.remove('is-on'); });
+      btn.classList.add('is-on');
+      document.querySelectorAll('.side-panel').forEach(function(p) {
+        p.classList.toggle('is-on', p.dataset.side === btn.dataset.side);
+      });
+      if (btn.dataset.side === 'all') renderAllList();
+    });
+  });
+
+  function renderAllList() {
+    var filter = (allSearch.value || '').toLowerCase().trim();
+    var today = isoDate(new Date());
+    var rows = state.slots
+      .filter(function(s) { return s.date >= today; })
+      .filter(function(s) { return !filter || s.date.indexOf(filter) >= 0 || s.time.indexOf(filter) >= 0; })
+      .sort(function(a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : a.time < b.time ? -1 : 1; });
+    allCount.textContent = rows.length + ' időpont';
+
+    if (!rows.length) {
+      allList.innerHTML = '<div class="empty-state">Nincs jövőbeli időpont.<br/>A fenti banner gombjával 30 nap egyben hozzáadható.</div>';
+      return;
+    }
+    // Group by date
+    var groups = [];
+    var cur = null;
+    rows.forEach(function(s) {
+      if (!cur || cur.date !== s.date) {
+        cur = { date: s.date, slots: [] };
+        groups.push(cur);
+      }
+      cur.slots.push(s);
+    });
+
+    allList.innerHTML = groups.map(function(g) {
+      var d = parseIso(g.date);
+      var dayName = DAYS_HU[d.getDay()];
+      var label = dayName + ' · ' + MONTHS_HU[d.getMonth()] + ' ' + d.getDate() + '.';
+      var times = g.slots.map(function(s) {
+        var cls = 'all-time';
+        var badge = '';
+        if (s.status === 'booked' && s.bookingId === 'manual') { cls += ' m'; badge = ' <span class="badge">letiltva</span>'; }
+        else if (s.status === 'booked') { cls += ' x'; badge = ' <span class="badge">foglalt</span>'; }
+        return '<button class="' + cls + '" data-date="' + g.date + '" data-time="' + s.time + '">' + s.time + badge + '</button>';
+      }).join('');
+      return '<div class="all-group">' +
+        '<div class="all-group__date"><b>' + label + '</b><span>' + g.date + '</span></div>' +
+        '<div class="all-times">' + times + '</div>' +
+      '</div>';
+    }).join('');
+
+    allList.querySelectorAll('.all-time').forEach(function(b) {
+      b.addEventListener('click', function() {
+        selectDay(b.dataset.date);
+        document.querySelector('.side-tab[data-side="day"]').click();
+      });
+    });
+  }
+
+  allSearch.addEventListener('input', function() { renderAllList(); });
   $('refreshBtn').addEventListener('click', loadAll);
 
   $('sheetBtn').addEventListener('click', function() {
@@ -722,7 +888,7 @@
               match.status = r.status;
               match.bookingId = r.status === 'booked' ? 'manual' : '';
             }
-            renderCalendar(); renderSlotList(); updateBanner();
+            renderCalendar(); renderSlotList(); renderAllList(); updateBanner();
             toast(r.status === 'free' ? 'Szabadra állítva.' : 'Letiltva.', 'ok');
           }).catch(function(e) {
             toggleBtn.disabled = false;
@@ -734,7 +900,7 @@
           deleteBtn.disabled = true;
           run('adminRemoveSlot', pw, iso, s.time).then(function() {
             state.slots = state.slots.filter(function(x) { return !(x.date === iso && x.time === s.time); });
-            renderCalendar(); renderSlotList(); updateBanner();
+            renderCalendar(); renderSlotList(); renderAllList(); updateBanner();
             toast('Időpont törölve.', 'ok');
           }).catch(function(e) {
             deleteBtn.disabled = false;

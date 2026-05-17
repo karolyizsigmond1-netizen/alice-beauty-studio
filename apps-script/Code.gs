@@ -100,30 +100,33 @@ function adminRemoveSlot(password, dateIso, time) {
 
 function adminAddDayPreset(password, dateIso, preset) {
   if (!adminAuth(password)) throw new Error('Hibás jelszó');
-  // preset: 'standard' (9–17 every hour), 'morning' (9–12), 'afternoon' (13–17), 'saturday' (9–14)
   const times = ({
     standard:  ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'],
     morning:   ['09:00','10:00','11:00','12:00'],
     afternoon: ['13:00','14:00','15:00','16:00','17:00'],
     saturday:  ['09:00','10:00','11:00','12:00','13:00','14:00']
   })[preset] || [];
-  let added = 0;
+  const sh = sheet_(SHEET_SLOTS);
+  const data = sh.getDataRange().getValues();
+  const have = {};
+  for (let i = 1; i < data.length; i++) have[data[i][0] + '|' + data[i][1]] = true;
+  const rows = [];
   times.forEach(function(t) {
-    try { addSlot_(dateIso, t); added++; } catch(e) {}
+    if (!have[dateIso + '|' + t]) rows.push([dateIso, t, 'free', '']);
   });
-  return { added: added };
+  if (rows.length) {
+    const startRow = sh.getLastRow() + 1;
+    sh.getRange(startRow, 1, rows.length, 4).setValues(rows);
+  }
+  return { added: rows.length };
 }
 
 function adminClearDay(password, dateIso) {
   if (!adminAuth(password)) throw new Error('Hibás jelszó');
   const sh = sheet_(SHEET_SLOTS);
-  const data = sh.getDataRange().getValues();
-  const toDelete = [];
-  for (let i = data.length - 1; i >= 1; i--) {
-    if (data[i][0] === dateIso && data[i][2] !== 'booked') toDelete.push(i + 1);
-  }
-  toDelete.forEach(function(r) { sh.deleteRow(r); });
-  return { removed: toDelete.length };
+  return batchDelete_(sh, function(row) {
+    return row[0] === dateIso && !(row[2] === 'booked' && row[3] && row[3] !== 'manual');
+  });
 }
 
 function adminCancelBooking(password, bookingId) {
@@ -146,24 +149,30 @@ function adminBulkFill(password, days) {
 
   const weekday = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
   const saturday = ['09:00','10:00','11:00','12:00','13:00','14:00'];
-  let added = 0, skipped = 0;
+  const rowsToAdd = [];
+  let skipped = 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   for (let n = 1; n <= days; n++) {
     const d = new Date(today.getTime() + n * 86400000);
-    const dow = d.getDay(); // 0=Sun
+    const dow = d.getDay();
     if (dow === 0) continue;
     const iso = Utilities.formatDate(d, CONFIG.timezone, 'yyyy-MM-dd');
     const pool = dow === 6 ? saturday : weekday;
-    pool.forEach(function(t) {
-      if (have[iso + '|' + t]) { skipped++; return; }
-      sh.appendRow([iso, t, 'free', '']);
+    for (let k = 0; k < pool.length; k++) {
+      const t = pool[k];
+      if (have[iso + '|' + t]) { skipped++; continue; }
+      rowsToAdd.push([iso, t, 'free', '']);
       have[iso + '|' + t] = true;
-      added++;
-    });
+    }
   }
-  return { added: added, skipped: skipped, days: days };
+  // SINGLE batch write — orders of magnitude faster than appendRow in a loop
+  if (rowsToAdd.length) {
+    const startRow = sh.getLastRow() + 1;
+    sh.getRange(startRow, 1, rowsToAdd.length, 4).setValues(rowsToAdd);
+  }
+  return { added: rowsToAdd.length, skipped: skipped, days: days };
 }
 
 /**
@@ -198,16 +207,35 @@ function adminToggleSlot(password, dateIso, time) {
 function adminWipeFuture(password) {
   if (!adminAuth(password)) throw new Error('Hibás jelszó');
   const sh = sheet_(SHEET_SLOTS);
-  const data = sh.getDataRange().getValues();
   const today = todayIso_();
-  const toDelete = [];
-  for (let i = data.length - 1; i >= 1; i--) {
-    if (data[i][0] >= today && !(data[i][2] === 'booked' && data[i][3])) {
-      toDelete.push(i + 1);
-    }
+  return batchDelete_(sh, function(row) {
+    return row[0] >= today && !(row[2] === 'booked' && row[3] && row[3] !== 'manual');
+  });
+}
+
+/**
+ * Delete rows matching a predicate in contiguous batches.
+ * Far faster than deleteRow() in a loop because contiguous ranges
+ * become a single deleteRows(start, count) call.
+ */
+function batchDelete_(sh, pred) {
+  const data = sh.getDataRange().getValues();
+  const toDeleteRows = [];
+  for (let i = 1; i < data.length; i++) {
+    if (pred(data[i])) toDeleteRows.push(i + 1);
   }
-  toDelete.forEach(function(r) { sh.deleteRow(r); });
-  return { removed: toDelete.length };
+  // walk from bottom up, grouping contiguous rows
+  toDeleteRows.sort(function(a, b) { return b - a; });
+  let i = 0;
+  while (i < toDeleteRows.length) {
+    let j = i;
+    while (j + 1 < toDeleteRows.length && toDeleteRows[j + 1] === toDeleteRows[j] - 1) j++;
+    const top = toDeleteRows[j];
+    const count = j - i + 1;
+    sh.deleteRows(top, count);
+    i = j + 1;
+  }
+  return { removed: toDeleteRows.length };
 }
 
 // ============== BOOKING ==============
