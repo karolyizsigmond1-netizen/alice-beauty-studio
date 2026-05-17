@@ -229,29 +229,7 @@ function batchDelete_(sh, pred) {
   for (let i = 1; i < data.length; i++) {
     if (pred(data[i])) toDeleteRows.push(i + 1);
   }
-  if (toDeleteRows.length === 0) return { removed: 0 };
-
-  // EDGE CASE: Sheets won't let you delete ALL non-frozen rows
-  // (sheet must retain at least one data row after the frozen header).
-  // If we'd delete every data row, use clearContent on the range instead —
-  // it logically does the same thing for our purposes (a header-only sheet).
-  const totalDataRows = data.length - 1; // minus header
-  if (toDeleteRows.length >= totalDataRows && totalDataRows > 0) {
-    sh.getRange(2, 1, totalDataRows, sh.getLastColumn()).clearContent();
-    return { removed: totalDataRows };
-  }
-
-  // Otherwise: walk from bottom up, grouping contiguous rows
-  toDeleteRows.sort(function(a, b) { return b - a; });
-  let i = 0;
-  while (i < toDeleteRows.length) {
-    let j = i;
-    while (j + 1 < toDeleteRows.length && toDeleteRows[j + 1] === toDeleteRows[j] - 1) j++;
-    const top = toDeleteRows[j];
-    const count = j - i + 1;
-    sh.deleteRows(top, count);
-    i = j + 1;
-  }
+  batchDeleteRows_(sh, toDeleteRows);
   return { removed: toDeleteRows.length };
 }
 
@@ -517,8 +495,14 @@ function enableEmail() {
 function dedupeSlots() {
   const sh = sheet_(SHEET_SLOTS);
   const data = sh.getDataRange().getValues();
-  const seen = {};   // key -> { row, status, bookingId }
+  const seen = {};   // key -> { row, status, bid, priority }
   const dups = [];   // rows to delete
+
+  function priorityOf(status, bid) {
+    if (status === 'booked' && bid && bid !== 'manual') return 3; // real booking
+    if (status === 'booked') return 2;                            // manual block
+    return 1;                                                     // free
+  }
 
   for (let i = 1; i < data.length; i++) {
     const date = asDateStr_(data[i][0]);
@@ -527,31 +511,51 @@ function dedupeSlots() {
     const key = date + '|' + time;
     const status = String(data[i][2] || 'free');
     const bid = String(data[i][3] || '');
+    const p = priorityOf(status, bid);
 
     if (!seen[key]) {
-      seen[key] = { row: i + 1, status: status, bid: bid };
+      seen[key] = { row: i + 1, priority: p };
       continue;
     }
-    // Decide which to keep: real bookings > manual > free; older row loses tie
-    const prev = seen[key];
-    const prevPriority = prev.status === 'booked' && prev.bid && prev.bid !== 'manual' ? 3
-      : prev.status === 'booked' ? 2 : 1;
-    const newPriority = status === 'booked' && bid && bid !== 'manual' ? 3
-      : status === 'booked' ? 2 : 1;
-    if (newPriority > prevPriority) {
-      dups.push(prev.row);
-      seen[key] = { row: i + 1, status: status, bid: bid };
+    if (p > seen[key].priority) {
+      dups.push(seen[key].row);
+      seen[key] = { row: i + 1, priority: p };
     } else {
       dups.push(i + 1);
     }
   }
 
   if (!dups.length) return { removed: 0, kept: Object.keys(seen).length };
-
-  // Delete from bottom up so row indices stay valid
-  dups.sort(function(a, b) { return b - a; });
-  dups.forEach(function(r) { sh.deleteRow(r); });
+  batchDeleteRows_(sh, dups);
   return { removed: dups.length, kept: Object.keys(seen).length };
+}
+
+/**
+ * Delete a set of row numbers in batched contiguous-range calls.
+ * Far fewer API calls than one deleteRow per row, and immune to the
+ * "Service Spreadsheets failed" error you get when looping deleteRow.
+ * Also handles the "can't delete all unfrozen rows" edge case.
+ */
+function batchDeleteRows_(sh, rowNumbers) {
+  if (!rowNumbers || !rowNumbers.length) return;
+  const lastRow = sh.getLastRow();
+  const totalDataRows = lastRow - 1; // minus header
+  // Edge case: deleting every data row → use clearContent instead
+  if (rowNumbers.length >= totalDataRows && totalDataRows > 0) {
+    sh.getRange(2, 1, totalDataRows, sh.getLastColumn()).clearContent();
+    return;
+  }
+  // Walk from bottom up, grouping contiguous rows
+  const sorted = rowNumbers.slice().sort(function(a, b) { return b - a; });
+  let i = 0;
+  while (i < sorted.length) {
+    let j = i;
+    while (j + 1 < sorted.length && sorted[j + 1] === sorted[j] - 1) j++;
+    const top = sorted[j];
+    const count = j - i + 1;
+    sh.deleteRows(top, count);
+    i = j + 1;
+  }
 }
 
 function ensureSetup_() {
