@@ -571,7 +571,7 @@
         <button class="btn btn--ghost" id="svcAddBtn">+ Új szolgáltatás</button>
         <div class="svc-save-row">
           <span class="svc-dirty" id="svcDirty"></span>
-          <button class="btn" id="svcSaveBtn" disabled>Mentés</button>
+          <button class="btn" id="svcSaveBtn">Mentés</button>
         </div>
       </div>
 
@@ -883,7 +883,10 @@
     updateServiceDirty();
   }
   function updateServiceDirty() {
-    svcSaveBtn.disabled = !state.servicesDirty;
+    // Always allow save when there's at least one service — defensive against
+    // missed change detection edge cases. Visual cue still flags dirty state.
+    svcSaveBtn.disabled = state.services.length === 0;
+    svcDirty.style.color = '';
     svcDirty.textContent = state.servicesDirty ? '✦ Van mentetlen módosítás' : '';
   }
 
@@ -913,17 +916,31 @@
     if (!clean.length) { toast('Adj meg legalább egy szolgáltatást.', 'err'); return; }
     svcSaveBtn.disabled = true;
     svcSaveBtn.textContent = 'Mentés...';
-    run('adminSaveServices', pw, clean).then(function() {
+    svcDirty.textContent = '⏳ Küldés folyamatban...';
+    svcDirty.style.color = '#8e7680';
+
+    console.log('[admin] Saving services:', clean);
+
+    run('adminSaveServices', pw, clean).then(function(res) {
+      console.log('[admin] Save result:', res);
       state.services = clean;
       state.servicesDirty = false;
       svcSaveBtn.textContent = 'Mentés';
+      svcDirty.style.color = '';
       updateServiceDirty();
       renderServices();
-      toast('Szolgáltatások mentve. A weboldal pár másodperc múlva frissül.', 'ok');
+      toast('✿ ' + clean.length + ' szolgáltatás mentve. Frissítsd a weboldalt.', 'ok');
     }).catch(function(e) {
+      console.error('[admin] Save failed:', e);
       svcSaveBtn.textContent = 'Mentés';
       svcSaveBtn.disabled = false;
-      toast(e.message || 'Hiba', 'err');
+      svcDirty.style.color = '#b6463f';
+      svcDirty.textContent = '✕ ' + (e.message || 'Ismeretlen hiba');
+      var msg = e && e.message ? e.message : 'Ismeretlen hiba';
+      if (/not found|adminSaveServices/i.test(msg)) {
+        msg = 'A szerveren nem található adminSaveServices — biztos hogy újra deploy-oltad? Deploy → Manage deployments → ✎ → New version.';
+      }
+      toast(msg, 'err');
     });
   });
 
