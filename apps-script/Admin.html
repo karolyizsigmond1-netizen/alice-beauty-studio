@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alice Beauty · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf5f6;
+    --blush: #f3eced;
+    --plum: #2a1822;
+    --plum-soft: #4a2e3d;
+    --rose: #c4847f;
+    --rose-deep: #a4615c;
+    --mute: #8e7680;
+    --line: rgba(42,24,34,0.12);
+    --line-faint: rgba(42,24,34,0.06);
+    --ok: #6fa86b;
+    --warn: #c0852b;
+    --bad: #b6463f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Schibsted Grotesk', -apple-system, sans-serif;
+    background: var(--blush);
+    color: var(--plum);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* AUTH GATE */
+  .gate {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .gate-card {
+    background: var(--paper);
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 100%; max-width: 380px;
+    box-shadow: 0 30px 60px -20px rgba(42,24,34,0.2);
+    text-align: center;
+  }
+  .gate-mark {
+    width: 56px; height: 56px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: var(--plum);
+    color: var(--paper);
+    display: grid; place-items: center;
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    box-shadow: 0 0 0 6px rgba(196,132,127,0.2);
+  }
+  .gate h1 {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400; font-size: 28px;
+    margin-bottom: 6px;
+  }
+  .gate h1 em { font-family: 'Instrument Serif', serif; font-style: italic; color: var(--rose-deep); }
+  .gate p { color: var(--mute); margin-bottom: 28px; font-style: italic; font-family: 'Instrument Serif', serif; font-size: 16px; }
+  .gate input {
+    width: 100%; padding: 14px 18px;
+    background: var(--blush);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-family: inherit; font-size: 15px;
+    color: var(--plum);
+    outline: none;
+    margin-bottom: 12px;
+    transition: border-color 0.3s;
+  }
+  .gate input:focus { border-color: var(--rose-deep); background: #fff; }
+  .gate-err { color: var(--bad); font-size: 13px; min-height: 18px; margin-bottom: 8px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 24px;
+    border: 1px solid var(--plum);
+    background: var(--plum); color: var(--paper);
+    border-radius: 100px;
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .btn:hover:not(:disabled) { background: var(--rose-deep); border-color: var(--rose-deep); transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn--ghost { background: transparent; color: var(--plum); }
+  .btn--ghost:hover:not(:disabled) { background: rgba(42,24,34,0.06); }
+  .btn--danger { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .btn--danger:hover:not(:disabled) { background: #8e302a; border-color: #8e302a; }
+  .btn--block { width: 100%; }
+
+  /* APP */
+  .app { display: none; min-height: 100vh; }
+  .app.is-on { display: block; }
+  .topbar {
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; font-family: 'DM Serif Display', serif; font-size: 18px; }
+  .brand-mark { width: 32px; height: 32px; background: var(--plum); color: var(--paper); border-radius: 50%; display: grid; place-items: center; font-size: 16px; }
+  .brand em { font-family: 'Instrument Serif', serif; font-style: italic; color: var(--rose-deep); font-size: 16px; }
+  .tabs { display: flex; gap: 4px; background: var(--blush); padding: 4px; border-radius: 100px; }
+  .tab { padding: 8px 18px; font-size: 12px; font-weight: 500; letter-spacing: 0.06em; border-radius: 100px; cursor: pointer; color: var(--mute); transition: all 0.3s; background: transparent; border: none; font-family: inherit; }
+  .tab.is-on { background: var(--plum); color: var(--paper); }
+  .ctas { display: flex; gap: 8px; }
+  .icon-btn { width: 36px; height: 36px; border-radius: 50%; background: transparent; border: 1px solid var(--line); cursor: pointer; display: grid; place-items: center; color: var(--plum); transition: all 0.3s; }
+  .icon-btn:hover { background: var(--plum); color: var(--paper); border-color: var(--plum); }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+  /* CALENDAR LAYOUT */
+  .panel { display: none; }
+  .panel.is-on { display: block; animation: fade .4s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .cal-layout { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; }
+  @media (max-width: 880px) { .cal-layout { grid-template-columns: 1fr; } }
+
+  .card { background: var(--paper); border-radius: 14px; padding: 24px; border: 1px solid var(--line-faint); }
+
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .cal-nav { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: transparent; cursor: pointer; display: grid; place-items: center; color: var(--plum); transition: all 0.3s; }
+  .cal-nav:hover { background: var(--plum); color: var(--paper); border-color: var(--plum); }
+  .cal-nav svg { width: 14px; height: 14px; }
+  .cal-month { font-family: 'DM Serif Display', serif; font-size: 22px; }
+  .cal-dows { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-bottom: 6px; }
+  .cal-dows span { text-align: center; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); padding: 6px 0; font-weight: 500; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+  .cal-day {
+    aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border-radius: 8px; cursor: pointer; border: 1px solid transparent;
+    font-size: 13px; color: var(--plum); background: transparent;
+    transition: all 0.2s; position: relative; padding: 4px; font-family: inherit;
+  }
+  .cal-day .num { font-weight: 500; }
+  .cal-day .dots { display: flex; gap: 2px; margin-top: 3px; }
+  .cal-day .dots i { width: 4px; height: 4px; border-radius: 50%; background: var(--ok); }
+  .cal-day .dots i.booked { background: var(--rose-deep); }
+  .cal-day:hover:not(.empty):not(.past) { background: rgba(196,132,127,0.18); border-color: rgba(164,97,92,0.3); }
+  .cal-day.empty { cursor: default; }
+  .cal-day.past { opacity: 0.3; cursor: not-allowed; }
+  .cal-day.today .num { color: var(--rose-deep); font-weight: 700; }
+  .cal-day.selected { background: var(--plum); color: var(--paper); border-color: var(--plum); }
+  .cal-day.selected .dots i { background: var(--rose); }
+
+  .day-pane h3 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 22px; margin-bottom: 6px; }
+  .day-pane .day-sub { color: var(--mute); font-style: italic; font-family: 'Instrument Serif', serif; font-size: 15px; margin-bottom: 20px; }
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+  .chip {
+    padding: 7px 13px; font-size: 11px; letter-spacing: 0.06em;
+    background: var(--blush); border: 1px solid var(--line); border-radius: 100px;
+    cursor: pointer; font-family: inherit; color: var(--plum);
+    transition: all 0.3s;
+  }
+  .chip:hover { background: var(--plum); color: var(--paper); border-color: var(--plum); }
+
+  .add-row { display: flex; gap: 8px; margin-bottom: 18px; }
+  .add-row input {
+    flex: 1; padding: 11px 14px; background: var(--blush); border: 1px solid var(--line); border-radius: 8px;
+    font-family: inherit; font-size: 14px; color: var(--plum); outline: none;
+  }
+  .add-row input:focus { border-color: var(--rose-deep); background: #fff; }
+  .add-row button { padding: 11px 18px; }
+
+  .slot-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .slot-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px;
+    background: var(--blush); border-radius: 8px;
+    font-size: 14px;
+  }
+  .slot-item.is-booked { background: rgba(164,97,92,0.08); border-left: 3px solid var(--rose-deep); }
+  .slot-time { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--plum); }
+  .slot-status {
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 100px; font-weight: 500;
+  }
+  .slot-status.free { background: rgba(111,168,107,0.18); color: #3f6c3b; }
+  .slot-status.booked { background: rgba(164,97,92,0.2); color: var(--rose-deep); }
+  .slot-actions { display: flex; gap: 6px; align-items: center; }
+  .slot-mini { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: transparent; cursor: pointer; display: grid; place-items: center; color: var(--plum); transition: all 0.25s; }
+  .slot-mini:hover { background: var(--bad); color: #fff; border-color: var(--bad); }
+  .slot-mini svg { width: 12px; height: 12px; }
+
+  .empty-state { padding: 32px 16px; text-align: center; color: var(--mute); font-style: italic; font-family: 'Instrument Serif', serif; }
+
+  /* BOOKINGS PANEL */
+  .bookings-list { display: flex; flex-direction: column; gap: 10px; }
+  .booking-item {
+    background: var(--paper); border: 1px solid var(--line-faint); border-radius: 12px; padding: 18px 22px;
+    display: grid; grid-template-columns: auto 1fr auto; gap: 16px 24px; align-items: center;
+  }
+  @media (max-width: 720px) { .booking-item { grid-template-columns: 1fr; } }
+  .booking-when { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--plum); }
+  .booking-when small { display: block; font-family: 'Instrument Serif', serif; font-style: italic; font-size: 13px; color: var(--mute); margin-top: 2px; }
+  .booking-info { display: flex; flex-direction: column; gap: 2px; }
+  .booking-name { font-size: 15px; font-weight: 600; color: var(--plum); }
+  .booking-svc { font-size: 13px; color: var(--mute); }
+  .booking-contact { font-size: 12px; color: var(--mute); margin-top: 4px; }
+  .booking-contact a { color: var(--rose-deep); }
+  .booking-status { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; padding: 4px 10px; border-radius: 100px; }
+  .booking-status.confirmed { background: rgba(111,168,107,0.18); color: #3f6c3b; }
+  .booking-status.cancelled { background: rgba(140,140,140,0.18); color: #6e6e6e; }
+  .booking-cancel { background: transparent; border: 1px solid var(--line); border-radius: 100px; padding: 6px 14px; font-size: 11px; cursor: pointer; color: var(--bad); font-family: inherit; }
+  .booking-cancel:hover { background: var(--bad); color: #fff; border-color: var(--bad); }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(40px);
+    background: var(--plum); color: var(--paper);
+    padding: 12px 20px; border-radius: 100px;
+    font-size: 13px; font-weight: 500;
+    opacity: 0; pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
+    z-index: 100;
+  }
+  .toast.is-on { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.is-err { background: var(--bad); }
+
+  /* HEADER */
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
+  .section-head h2 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 28px; }
+  .section-head .stat { font-size: 13px; color: var(--mute); font-style: italic; font-family: 'Instrument Serif', serif; }
+
+  .legend { display: flex; gap: 16px; align-items: center; font-size: 12px; color: var(--mute); margin-top: 14px; }
+  .legend i { width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; display: inline-block; }
+  .legend .free { background: var(--ok); }
+  .legend .booked { background: var(--rose-deep); }
+
+  .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--mute); font-style: italic; font-family: 'Instrument Serif', serif; }
+</style>
+</head>
+<body>
+
+<!-- AUTH GATE -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="gate-mark">A</div>
+    <h1>Alice <em>Admin</em></h1>
+    <p>Add meg a jelszót a folytatáshoz.</p>
+    <input type="password" id="gatePw" placeholder="Jelszó" autocomplete="current-password" />
+    <div class="gate-err" id="gateErr"></div>
+    <button class="btn btn--block" id="gateBtn">Belépés</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="brand">
+      <span class="brand-mark">A</span>
+      <span>Alice <em>Admin</em></span>
+    </div>
+    <div class="tabs">
+      <button class="tab is-on" data-tab="cal">Időpontok</button>
+      <button class="tab" data-tab="bookings">Foglalások <span id="bkCount"></span></button>
+    </div>
+    <div class="ctas">
+      <button class="icon-btn" id="refreshBtn" title="Frissítés">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+      </button>
+      <button class="icon-btn" id="sheetBtn" title="Sheet megnyitása">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M9 8h6M9 12h6M9 16h6"/></svg>
+      </button>
+      <button class="icon-btn" id="logoutBtn" title="Kijelentkezés">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- CALENDAR PANEL -->
+    <div class="panel is-on" data-panel="cal">
+      <div class="section-head">
+        <h2>Időpontok kezelése</h2>
+        <span class="stat" id="calStat"></span>
+      </div>
+
+      <div class="cal-layout">
+        <div class="card">
+          <div class="cal-head">
+            <button class="cal-nav" id="calPrev">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="cal-month" id="calMonth"></div>
+            <button class="cal-nav" id="calNext">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="cal-dows">
+            <span>H</span><span>K</span><span>Sz</span><span>Cs</span><span>P</span><span>Szo</span><span>V</span>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="legend">
+            <span><i class="free"></i>szabad</span>
+            <span><i class="booked"></i>foglalt</span>
+          </div>
+        </div>
+
+        <div class="card day-pane">
+          <h3 id="dayTitle">Válassz egy napot</h3>
+          <p class="day-sub" id="daySub">Bal oldalt koppints egy napra, és itt kezelheted a hozzá tartozó időpontokat.</p>
+
+          <div id="dayContent" style="display:none">
+            <div class="preset-row">
+              <button class="chip" data-preset="standard">+ Hét napjai (9–17)</button>
+              <button class="chip" data-preset="morning">+ Délelőtt (9–12)</button>
+              <button class="chip" data-preset="afternoon">+ Délután (13–17)</button>
+              <button class="chip" data-preset="saturday">+ Szombat (9–14)</button>
+            </div>
+            <div class="add-row">
+              <input type="time" id="addTime" step="900" />
+              <button class="btn" id="addBtn">Hozzáad</button>
+            </div>
+            <ul class="slot-list" id="slotList"></ul>
+            <div style="margin-top: 16px; text-align: right;">
+              <button class="btn btn--ghost" id="clearDayBtn">Mind törlése (nem-foglalt)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOOKINGS PANEL -->
+    <div class="panel" data-panel="bookings">
+      <div class="section-head">
+        <h2>Foglalások</h2>
+        <span class="stat" id="bkStat"></span>
+      </div>
+      <div class="bookings-list" id="bookingsList">
+        <div class="loading">Betöltés...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  var pw = sessionStorage.getItem('aliceAdminPw') || '';
+  var state = {
+    viewMonth: new Date(),
+    selectedDate: null,
+    slots: [],
+    bookings: []
+  };
+
+  var MONTHS_HU = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
+  var DAYS_HU = ['Vasárnap','Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat'];
+
+  // ── DOM ──
+  var $ = function(id) { return document.getElementById(id); };
+  var gate = $('gate'), app = $('app');
+  var gatePw = $('gatePw'), gateBtn = $('gateBtn'), gateErr = $('gateErr');
+  var calGrid = $('calGrid'), calMonth = $('calMonth');
+  var calStat = $('calStat'), bkStat = $('bkStat'), bkCount = $('bkCount');
+  var dayTitle = $('dayTitle'), daySub = $('daySub'), dayContent = $('dayContent');
+  var slotList = $('slotList'), addTime = $('addTime'), addBtn = $('addBtn');
+  var clearDayBtn = $('clearDayBtn');
+  var bookingsList = $('bookingsList');
+  var toastEl = $('toast');
+
+  // ── HELPERS ──
+  function toast(msg, err) {
+    toastEl.textContent = msg;
+    toastEl.classList.toggle('is-err', !!err);
+    toastEl.classList.add('is-on');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function() { toastEl.classList.remove('is-on'); }, 2600);
+  }
+  function isoDate(d) { return d.toISOString().slice(0, 10); }
+  function parseIso(iso) { return new Date(iso + 'T00:00:00'); }
+
+  function run(fn /*, ...args, success, failure */) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function(resolve, reject) {
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(null, args);
+    });
+  }
+
+  // ── AUTH ──
+  function tryLogin(p) {
+    gateErr.textContent = '';
+    gateBtn.disabled = true;
+    gateBtn.textContent = 'Ellenőrzés...';
+    run('adminAuth', p).then(function(ok) {
+      gateBtn.disabled = false;
+      gateBtn.textContent = 'Belépés';
+      if (ok) {
+        pw = p;
+        sessionStorage.setItem('aliceAdminPw', p);
+        showApp();
+      } else {
+        gateErr.textContent = 'Hibás jelszó.';
+        gatePw.value = '';
+        gatePw.focus();
+      }
+    }).catch(function(e) {
+      gateBtn.disabled = false;
+      gateBtn.textContent = 'Belépés';
+      gateErr.textContent = e.message || 'Hiba történt';
+    });
+  }
+  gateBtn.addEventListener('click', function() {
+    var p = gatePw.value.trim();
+    if (p) tryLogin(p);
+  });
+  gatePw.addEventListener('keydown', function(e) { if (e.key === 'Enter') gateBtn.click(); });
+
+  function showApp() {
+    gate.style.display = 'none';
+    app.classList.add('is-on');
+    loadAll();
+  }
+
+  $('logoutBtn').addEventListener('click', function() {
+    sessionStorage.removeItem('aliceAdminPw');
+    location.reload();
+  });
+
+  // ── TABS ──
+  document.querySelectorAll('.tab').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('is-on'); });
+      btn.classList.add('is-on');
+      var name = btn.dataset.tab;
+      document.querySelectorAll('.panel').forEach(function(p) {
+        p.classList.toggle('is-on', p.dataset.panel === name);
+      });
+      if (name === 'bookings') renderBookings();
+    });
+  });
+
+  // ── DATA ──
+  function loadAll() {
+    calMonth.textContent = 'Betöltés...';
+    bookingsList.innerHTML = '<div class="loading">Betöltés...</div>';
+    run('adminGetState').then(function(s) {
+      state.slots = s.slots || [];
+      state.bookings = s.bookings || [];
+      renderCalendar();
+      renderBookings();
+      updateStats();
+    }).catch(function(e) {
+      toast('Betöltési hiba: ' + (e.message || e), true);
+    });
+  }
+  $('refreshBtn').addEventListener('click', loadAll);
+
+  $('sheetBtn').addEventListener('click', function() {
+    run('adminGetSheetUrl', pw).then(function(url) {
+      if (url) window.open(url, '_blank');
+    }).catch(function(e) { toast(e.message || 'Hiba', true); });
+  });
+
+  function updateStats() {
+    var free = state.slots.filter(function(s) { return s.status === 'free'; }).length;
+    var booked = state.slots.filter(function(s) { return s.status === 'booked'; }).length;
+    calStat.textContent = free + ' szabad · ' + booked + ' foglalt időpont';
+    var future = state.bookings.filter(function(b) { return b.status === 'confirmed' && (b.date + ' ' + b.time) >= todayNowKey(); });
+    bkStat.textContent = future.length + ' jövőbeli foglalás · ' + state.bookings.length + ' összesen';
+    bkCount.textContent = future.length ? '· ' + future.length : '';
+  }
+  function todayNowKey() {
+    var n = new Date();
+    return isoDate(n) + ' ' + ('0' + n.getHours()).slice(-2) + ':' + ('0' + n.getMinutes()).slice(-2);
+  }
+
+  // ── CALENDAR ──
+  function renderCalendar() {
+    var view = state.viewMonth;
+    var year = view.getFullYear(), month = view.getMonth();
+    calMonth.textContent = MONTHS_HU[month] + ' ' + year;
+
+    var first = new Date(year, month, 1);
+    var offset = (first.getDay() + 6) % 7;
+    var days = new Date(year, month + 1, 0).getDate();
+    var todayStr = isoDate(new Date());
+
+    calGrid.innerHTML = '';
+    for (var i = 0; i < offset; i++) {
+      var em = document.createElement('div'); em.className = 'cal-day empty'; calGrid.appendChild(em);
+    }
+    for (var d = 1; d <= days; d++) {
+      var dt = new Date(year, month, d);
+      var iso = isoDate(dt);
+      var btn = document.createElement('button');
+      btn.className = 'cal-day';
+      btn.type = 'button';
+      var slotsOnDay = state.slots.filter(function(s) { return s.date === iso; });
+      var freeCount = slotsOnDay.filter(function(s) { return s.status === 'free'; }).length;
+      var bookedCount = slotsOnDay.filter(function(s) { return s.status === 'booked'; }).length;
+      var dots = '<div class="dots">';
+      for (var k = 0; k < Math.min(freeCount, 4); k++) dots += '<i></i>';
+      for (var k = 0; k < Math.min(bookedCount, 4); k++) dots += '<i class="booked"></i>';
+      dots += '</div>';
+      btn.innerHTML = '<span class="num">' + d + '</span>' + dots;
+
+      if (iso < todayStr) btn.classList.add('past');
+      if (iso === todayStr) btn.classList.add('today');
+      if (state.selectedDate === iso) btn.classList.add('selected');
+
+      (function(dateIso) {
+        btn.addEventListener('click', function() { selectDay(dateIso); });
+      })(iso);
+      calGrid.appendChild(btn);
+    }
+  }
+
+  $('calPrev').addEventListener('click', function() {
+    state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() - 1, 1);
+    renderCalendar();
+  });
+  $('calNext').addEventListener('click', function() {
+    state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() + 1, 1);
+    renderCalendar();
+  });
+
+  function selectDay(iso) {
+    state.selectedDate = iso;
+    renderCalendar();
+    renderDayPane();
+  }
+
+  function renderDayPane() {
+    var iso = state.selectedDate;
+    if (!iso) {
+      dayTitle.textContent = 'Válassz egy napot';
+      daySub.textContent = 'Bal oldalt koppints egy napra, és itt kezelheted a hozzá tartozó időpontokat.';
+      dayContent.style.display = 'none';
+      return;
+    }
+    var d = parseIso(iso);
+    dayTitle.textContent = DAYS_HU[d.getDay()] + ', ' + MONTHS_HU[d.getMonth()] + ' ' + d.getDate() + '.';
+    daySub.textContent = iso;
+    dayContent.style.display = 'block';
+    renderSlotList();
+  }
+
+  function renderSlotList() {
+    var iso = state.selectedDate;
+    var rows = state.slots.filter(function(s) { return s.date === iso; });
+    rows.sort(function(a, b) { return a.time < b.time ? -1 : 1; });
+    slotList.innerHTML = '';
+    if (rows.length === 0) {
+      slotList.innerHTML = '<div class="empty-state">Nincs még időpont ezen a napon. Adj hozzá felül.</div>';
+      return;
+    }
+    rows.forEach(function(s) {
+      var li = document.createElement('li');
+      li.className = 'slot-item' + (s.status === 'booked' ? ' is-booked' : '');
+      li.innerHTML =
+        '<div><span class="slot-time">' + s.time + '</span></div>' +
+        '<div class="slot-actions">' +
+          '<span class="slot-status ' + s.status + '">' + (s.status === 'free' ? 'Szabad' : 'Foglalt') + '</span>' +
+          (s.status === 'free'
+            ? '<button class="slot-mini" title="Törlés"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>'
+            : '<button class="slot-mini" title="Foglalás részletei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></button>') +
+        '</div>';
+      if (s.status === 'free') {
+        li.querySelector('.slot-mini').addEventListener('click', function() {
+          if (!confirm('Töröljem a ' + s.time + ' időpontot?')) return;
+          run('adminRemoveSlot', pw, iso, s.time).then(function() {
+            state.slots = state.slots.filter(function(x) { return !(x.date === iso && x.time === s.time); });
+            renderCalendar(); renderSlotList(); updateStats();
+            toast('Időpont törölve.');
+          }).catch(function(e) { toast(e.message || 'Hiba', true); });
+        });
+      } else {
+        li.querySelector('.slot-mini').addEventListener('click', function() {
+          document.querySelector('.tab[data-tab="bookings"]').click();
+        });
+      }
+      slotList.appendChild(li);
+    });
+  }
+
+  addBtn.addEventListener('click', function() {
+    var t = addTime.value;
+    if (!t || !state.selectedDate) return;
+    addBtn.disabled = true;
+    run('adminAddSlot', pw, state.selectedDate, t).then(function() {
+      state.slots.push({ date: state.selectedDate, time: t, status: 'free', bookingId: '' });
+      renderCalendar(); renderSlotList(); updateStats();
+      addTime.value = '';
+      toast('Időpont hozzáadva.');
+      addBtn.disabled = false;
+    }).catch(function(e) { toast(e.message || 'Hiba', true); addBtn.disabled = false; });
+  });
+
+  document.querySelectorAll('.chip').forEach(function(c) {
+    c.addEventListener('click', function() {
+      if (!state.selectedDate) return;
+      var preset = c.dataset.preset;
+      c.disabled = true;
+      run('adminAddDayPreset', pw, state.selectedDate, preset).then(function(r) {
+        c.disabled = false;
+        toast(r.added + ' időpont hozzáadva.');
+        loadAll();
+      }).catch(function(e) { toast(e.message || 'Hiba', true); c.disabled = false; });
+    });
+  });
+
+  clearDayBtn.addEventListener('click', function() {
+    if (!state.selectedDate) return;
+    if (!confirm('Biztosan törlöd az összes nem-foglalt időpontot erre a napra?')) return;
+    run('adminClearDay', pw, state.selectedDate).then(function(r) {
+      toast(r.removed + ' időpont törölve.');
+      loadAll();
+    }).catch(function(e) { toast(e.message || 'Hiba', true); });
+  });
+
+  // ── BOOKINGS ──
+  function renderBookings() {
+    if (!state.bookings.length) {
+      bookingsList.innerHTML = '<div class="empty-state">Még nincs foglalás.</div>';
+      return;
+    }
+    bookingsList.innerHTML = '';
+    state.bookings.forEach(function(b) {
+      var d = parseIso(b.date);
+      var dayLabel = DAYS_HU[d.getDay()] + ', ' + MONTHS_HU[d.getMonth()] + ' ' + d.getDate() + '.';
+      var item = document.createElement('div');
+      item.className = 'booking-item';
+      item.innerHTML =
+        '<div class="booking-when">' + b.time + '<small>' + dayLabel + '</small></div>' +
+        '<div class="booking-info">' +
+          '<span class="booking-name">' + escapeHtml(b.name) + '</span>' +
+          '<span class="booking-svc">' + escapeHtml(b.serviceName || b.service || '—') + '</span>' +
+          '<span class="booking-contact">' +
+            '<a href="tel:' + encodeURIComponent(b.phone) + '">' + escapeHtml(b.phone || '—') + '</a> · ' +
+            '<a href="mailto:' + encodeURIComponent(b.email) + '">' + escapeHtml(b.email) + '</a>' +
+          '</span>' +
+          (b.note ? '<span class="booking-contact" style="margin-top:6px;color:#4a2e3d;"><i>"' + escapeHtml(b.note) + '"</i></span>' : '') +
+        '</div>' +
+        '<div style="display:flex;gap:8px;align-items:center;flex-direction:column;">' +
+          '<span class="booking-status ' + b.status + '">' + (b.status === 'confirmed' ? 'Megerősítve' : 'Lemondva') + '</span>' +
+          (b.status === 'confirmed' ? '<button class="booking-cancel" data-id="' + b.bookingId + '">Lemondás</button>' : '') +
+        '</div>';
+      bookingsList.appendChild(item);
+    });
+    bookingsList.querySelectorAll('.booking-cancel').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (!confirm('Biztosan lemondod ezt a foglalást?')) return;
+        run('adminCancelBooking', pw, btn.dataset.id).then(function() {
+          toast('Foglalás lemondva.');
+          loadAll();
+        }).catch(function(e) { toast(e.message || 'Hiba', true); });
+      });
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+
+  // ── INIT ──
+  if (pw) {
+    // try silent login
+    run('adminAuth', pw).then(function(ok) {
+      if (ok) showApp();
+      else { sessionStorage.removeItem('aliceAdminPw'); pw = ''; }
+    }).catch(function() { sessionStorage.removeItem('aliceAdminPw'); pw = ''; });
+  }
+})();
+</script>
+</body>
+</html>

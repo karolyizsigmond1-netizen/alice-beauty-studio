@@ -1083,9 +1083,17 @@
   </style>
 
   <script>
+  // ============================================
+  // BOOKING CONFIG — paste your Apps Script Web App URL here after deploy
+  // Empty = localStorage demo mode (single device, no real emails)
+  // Set = live mode (multi-device, real emails from her Gmail)
+  // ============================================
+  window.BK_CONFIG = window.BK_CONFIG || {
+    backendUrl: ''   // e.g. 'https://script.google.com/macros/s/AKfycb.../exec'
+  };
+
   (function() {
     var modal = document.getElementById('bkModal');
-    var dialog = modal.querySelector('.bk-dialog');
     var nextBtn = document.getElementById('bkNext');
     var backBtn = document.getElementById('bkBack');
     var metaEl = document.getElementById('bkMeta');
@@ -1099,87 +1107,167 @@
     var steps = document.querySelectorAll('.bk-step');
     var panes = document.querySelectorAll('.bk-pane');
 
+    var MONTHS = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
+    var DAYS_HU = ['Vasárnap','Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat'];
+
     var state = {
       step: 1,
       service: null, serviceName: null, serviceMeta: null,
       date: null, dateLabel: null,
       time: null,
       name: '', phone: '', email: '', note: '',
-      viewMonth: new Date(2026, 4, 1) // May 2026
+      viewMonth: new Date(),  // current month
+      slotsByDate: {},        // { '2026-05-23': ['09:00','10:00',...] }
+      loadingSlots: false,
+      submitting: false
     };
 
-    var MONTHS = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
-    var DAYS_HU = ['Vasárnap','Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat'];
+    // ─── DATA LAYER: remote (Apps Script) or local (localStorage) ───
+    var BK = (function() {
+      var url = (window.BK_CONFIG && window.BK_CONFIG.backendUrl) || '';
+      var STORAGE_KEY = 'bk_demo_state_v1';
 
-    // Fake availability: deterministic-ish "taken" pattern
-    function isFullDay(d) {
-      // Sundays closed; some Tuesdays/Fridays fully booked
-      var day = d.getDay();
-      if (day === 0) return 'sun';
-      var dom = d.getDate();
-      if ((day === 2 && dom % 4 === 0) || (day === 5 && dom % 3 === 0)) return 'full';
-      return null;
-    }
-    function todayMidnight() {
-      var t = new Date(); t.setHours(0,0,0,0); return t;
+      function read() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { slots: seedSlots(), bookings: [] }; }
+        catch (e) { return { slots: seedSlots(), bookings: [] }; }
+      }
+      function write(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+      function seedSlots() {
+        // First-time visitors get a couple of weeks of generated slots so the demo isn't empty
+        var out = [];
+        var d = new Date(); d.setHours(0,0,0,0);
+        var times = ['09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00'];
+        var satTimes = ['09:00','10:00','11:00','12:00','13:00'];
+        for (var i = 1; i <= 21; i++) {
+          var dt = new Date(d.getTime() + i * 86400000);
+          var dow = dt.getDay();
+          if (dow === 0) continue; // sundays closed
+          var iso = isoOf(dt);
+          var pool = dow === 6 ? satTimes : times;
+          for (var k = 0; k < pool.length; k++) {
+            // randomize a bit so it doesn't look perfectly full
+            if (Math.random() > 0.25) out.push({ date: iso, time: pool[k], status: 'free' });
+          }
+        }
+        return out;
+      }
+      function isoOf(d) {
+        return d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+      }
+
+      return {
+        isRemote: !!url,
+        url: url,
+
+        // returns Promise<Array<{date, time}>> for free slots
+        loadSlots: function() {
+          if (url) {
+            return fetch(url + '?action=slots', { method: 'GET' })
+              .then(function(r) { return r.json(); })
+              .then(function(j) { if (!j.ok) throw new Error(j.error); return j.slots || []; });
+          }
+          var s = read();
+          return Promise.resolve(s.slots.filter(function(x) { return x.status === 'free'; })
+            .map(function(x) { return { date: x.date, time: x.time }; }));
+        },
+
+        // returns Promise<{ok, bookingId}>
+        book: function(payload) {
+          if (url) {
+            return fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },  // simple req, no preflight
+              body: JSON.stringify(Object.assign({ action: 'book' }, payload))
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(j) { if (!j.ok) throw new Error(j.error); return j; });
+          }
+          // local demo
+          var s = read();
+          var hit = -1;
+          for (var i = 0; i < s.slots.length; i++) {
+            if (s.slots[i].date === payload.date && s.slots[i].time === payload.time && s.slots[i].status === 'free') {
+              hit = i; break;
+            }
+          }
+          if (hit < 0) return Promise.reject(new Error('Ez az időpont már nem szabad'));
+          var bookingId = 'BK-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+          s.slots[hit].status = 'booked';
+          s.bookings.push(Object.assign({ bookingId: bookingId, created: new Date().toISOString() }, payload));
+          write(s);
+          return Promise.resolve({ ok: true, bookingId: bookingId, demo: true });
+        }
+      };
+    })();
+
+    function todayMidnight() { var t = new Date(); t.setHours(0,0,0,0); return t; }
+    function isoOf(d) {
+      return d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
     }
 
+    // ─── MODAL LIFECYCLE ───
     function openModal() {
       modal.classList.add('open');
       modal.setAttribute('aria-hidden', 'false');
       document.body.classList.add('bk-lock');
       setStep(state.step);
-      renderCalendar();
+      ensureSlots().then(renderCalendar);
     }
     function closeModal() {
       modal.classList.remove('open');
       modal.setAttribute('aria-hidden', 'true');
       document.body.classList.remove('bk-lock');
     }
+    function ensureSlots(force) {
+      if (state.loadingSlots) return Promise.resolve();
+      if (!force && Object.keys(state.slotsByDate).length) return Promise.resolve();
+      state.loadingSlots = true;
+      return BK.loadSlots().then(function(slots) {
+        state.slotsByDate = {};
+        slots.forEach(function(s) {
+          if (!state.slotsByDate[s.date]) state.slotsByDate[s.date] = [];
+          state.slotsByDate[s.date].push(s.time);
+        });
+        Object.keys(state.slotsByDate).forEach(function(k) {
+          state.slotsByDate[k].sort();
+        });
+        state.loadingSlots = false;
+      }).catch(function(e) {
+        state.loadingSlots = false;
+        console.warn('Slot load failed', e);
+      });
+    }
 
     function setStep(n) {
       state.step = n;
-      panes.forEach(function(p) {
-        p.classList.toggle('is-active', +p.dataset.pane === n);
-      });
+      panes.forEach(function(p) { p.classList.toggle('is-active', +p.dataset.pane === n); });
       steps.forEach(function(s) {
         var sn = +s.dataset.step;
         s.classList.toggle('is-active', sn === n);
         s.classList.toggle('is-done', sn < n);
       });
-      backBtn.disabled = n === 1 || n === 5;
       backBtn.style.visibility = (n === 1 || n === 5) ? 'hidden' : 'visible';
-
       updateMeta();
       updateNextState();
-
-      if (n === 5) {
-        nextBtn.textContent = 'Bezárás';
-        nextBtn.disabled = false;
-      } else if (n === 4) {
-        nextBtn.textContent = 'Foglalás megerősítése';
-      } else {
-        nextBtn.textContent = 'Tovább →';
-      }
+      if (n === 5) { nextBtn.textContent = 'Bezárás'; nextBtn.disabled = false; }
+      else if (n === 4) { nextBtn.textContent = 'Foglalás megerősítése'; }
+      else { nextBtn.textContent = 'Tovább →'; }
     }
 
     function updateMeta() {
+      if (state.submitting) { metaEl.innerHTML = '<i>Küldés folyamatban...</i>'; return; }
       var parts = [];
       if (state.serviceName) parts.push('<b>' + state.serviceName + '</b>');
       if (state.dateLabel) parts.push(state.dateLabel);
       if (state.time) parts.push(state.time);
-      if (state.step === 5) {
-        metaEl.innerHTML = 'Visszaigazolást küldök e-mailben';
-        return;
-      }
-      if (parts.length === 0) {
+      if (state.step === 5) { metaEl.innerHTML = 'Visszaigazolást küldök e-mailben'; return; }
+      if (!parts.length) {
         metaEl.innerHTML = ['Válassz szolgáltatást','Válassz dátumot','Válassz időpontot','Add meg az adatokat'][state.step - 1];
-      } else {
-        metaEl.innerHTML = parts.join(' · ');
-      }
+      } else metaEl.innerHTML = parts.join(' · ');
     }
 
     function updateNextState() {
+      if (state.submitting) { nextBtn.disabled = true; return; }
       if (state.step === 1) nextBtn.disabled = !state.service;
       else if (state.step === 2) nextBtn.disabled = !state.date;
       else if (state.step === 3) nextBtn.disabled = !state.time;
@@ -1192,11 +1280,10 @@
       var name = (fd.get('name') || '').toString().trim();
       var phone = (fd.get('phone') || '').toString().trim();
       var email = (fd.get('email') || '').toString().trim();
-      var emailOk = /.+@.+\..+/.test(email);
-      return name.length >= 2 && phone.length >= 6 && emailOk;
+      return name.length >= 2 && phone.length >= 6 && /.+@.+\..+/.test(email);
     }
 
-    // ── SERVICE picker ──
+    // ─── SERVICE picker ───
     document.querySelectorAll('.bk-svc').forEach(function(btn) {
       btn.addEventListener('click', function() {
         document.querySelectorAll('.bk-svc').forEach(function(b) { b.classList.remove('is-selected'); });
@@ -1204,56 +1291,45 @@
         state.service = btn.dataset.svc;
         state.serviceName = btn.querySelector('.bk-svc-name').textContent.trim();
         state.serviceMeta = btn.querySelector('.bk-svc-meta').textContent.trim();
-        updateMeta();
-        updateNextState();
+        updateMeta(); updateNextState();
       });
     });
 
-    // ── CALENDAR ──
+    // ─── CALENDAR ───
     function renderCalendar() {
       var view = state.viewMonth;
-      var year = view.getFullYear();
-      var month = view.getMonth();
+      var year = view.getFullYear(), month = view.getMonth();
       calMonth.textContent = MONTHS[month] + ' ' + year;
-
       var first = new Date(year, month, 1);
-      // Monday-first index: JS getDay() Sun=0..Sat=6 → Mon=0..Sun=6
       var startOffset = (first.getDay() + 6) % 7;
       var daysInMonth = new Date(year, month + 1, 0).getDate();
       var today = todayMidnight();
 
       calGrid.innerHTML = '';
       for (var i = 0; i < startOffset; i++) {
-        var e = document.createElement('div');
-        e.className = 'bk-day is-empty';
-        calGrid.appendChild(e);
+        var e = document.createElement('div'); e.className = 'bk-day is-empty'; calGrid.appendChild(e);
       }
       for (var d = 1; d <= daysInMonth; d++) {
         var dt = new Date(year, month, d);
+        var iso = isoOf(dt);
         var btn = document.createElement('button');
-        btn.className = 'bk-day';
-        btn.textContent = d;
-        btn.type = 'button';
-        var full = isFullDay(dt);
+        btn.className = 'bk-day'; btn.textContent = d; btn.type = 'button';
         var isPast = dt < today;
+        var hasSlots = !!(state.slotsByDate[iso] && state.slotsByDate[iso].length);
         if (isPast) btn.classList.add('is-past');
-        else if (full === 'sun') btn.classList.add('is-sun');
-        else if (full === 'full') btn.classList.add('is-full');
+        else if (!hasSlots) btn.classList.add('is-full');
         if (dt.toDateString() === today.toDateString()) btn.classList.add('is-today');
-        if (state.date && new Date(state.date).toDateString() === dt.toDateString()) {
-          btn.classList.add('is-selected');
-        }
-        (function(date, isBlocked) {
+        if (state.date === iso) btn.classList.add('is-selected');
+        (function(dateIso, blocked) {
           btn.addEventListener('click', function() {
-            if (isBlocked) return;
-            state.date = date.toISOString();
-            state.dateLabel = DAYS_HU[date.getDay()] + ', ' + MONTHS[date.getMonth()] + ' ' + date.getDate() + '.';
+            if (blocked) return;
+            state.date = dateIso;
+            var pd = new Date(dateIso + 'T00:00:00');
+            state.dateLabel = DAYS_HU[pd.getDay()] + ', ' + MONTHS[pd.getMonth()] + ' ' + pd.getDate() + '.';
             state.time = null;
-            renderCalendar();
-            updateMeta();
-            updateNextState();
+            renderCalendar(); updateMeta(); updateNextState();
           });
-        })(dt, isPast || full);
+        })(iso, isPast || !hasSlots);
         calGrid.appendChild(btn);
       }
     }
@@ -1267,37 +1343,28 @@
       renderCalendar();
     });
 
-    // ── TIME slots ──
+    // ─── TIME slots ───
     function renderTimes() {
       timesEl.innerHTML = '';
-      var date = new Date(state.date);
-      var isSat = date.getDay() === 6;
-      var slots = isSat
-        ? ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30']
-        : ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30'];
-      // Pseudo-random taken pattern from date
-      var seed = date.getDate() + date.getMonth() * 31;
-      slots.forEach(function(s, i) {
-        var taken = ((seed * 7 + i * 13) % 5 === 0) || ((seed + i) % 11 === 0);
+      var slots = (state.slotsByDate[state.date] || []).slice();
+      if (!slots.length) {
+        timesEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#8e7680;font-family:Instrument Serif,serif;font-style:italic;">Erre a napra nincs szabad időpont.</div>';
+        timeSub.textContent = state.dateLabel + ' — nincs elérhető idősáv.';
+        return;
+      }
+      slots.forEach(function(s) {
         var b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'bk-time' + (taken ? ' is-taken' : '');
-        b.textContent = s;
+        b.type = 'button'; b.className = 'bk-time'; b.textContent = s;
         if (state.time === s) b.classList.add('is-selected');
-        if (!taken) {
-          b.addEventListener('click', function() {
-            state.time = s;
-            renderTimes();
-            updateMeta();
-            updateNextState();
-          });
-        }
+        b.addEventListener('click', function() {
+          state.time = s; renderTimes(); updateMeta(); updateNextState();
+        });
         timesEl.appendChild(b);
       });
       timeSub.textContent = state.dateLabel + ' — válassz egy szabad idősávot.';
     }
 
-    // ── FORM live validation ──
+    // ─── FORM live validation ───
     form.addEventListener('input', function() {
       var fd = new FormData(form);
       state.name = (fd.get('name') || '').toString().trim();
@@ -1307,26 +1374,48 @@
       updateNextState();
     });
 
-    // ── Navigation ──
+    // ─── Navigation ───
     nextBtn.addEventListener('click', function() {
       if (state.step === 5) { closeModal(); return; }
-      if (state.step === 3) {
-        // moving to details
-        setStep(4);
-        return;
-      }
-      if (state.step === 4) {
-        // submit
-        renderSummary();
-        setStep(5);
-        return;
-      }
-      if (state.step === 2) renderTimes();
+      if (state.step === 2) { renderTimes(); setStep(3); return; }
+      if (state.step === 4) { submitBooking(); return; }
       setStep(state.step + 1);
     });
     backBtn.addEventListener('click', function() {
-      if (state.step > 1) setStep(state.step - 1);
+      if (state.step > 1 && state.step < 5) setStep(state.step - 1);
     });
+
+    function submitBooking() {
+      state.submitting = true; updateMeta(); updateNextState();
+      nextBtn.textContent = 'Foglalás...';
+      BK.book({
+        date: state.date,
+        time: state.time,
+        service: state.service,
+        serviceName: state.serviceName,
+        serviceMeta: state.serviceMeta,
+        name: state.name,
+        phone: state.phone,
+        email: state.email,
+        note: state.note
+      }).then(function(res) {
+        state.submitting = false;
+        state.bookingId = res.bookingId;
+        state.demoOnly = !!res.demo;
+        renderSummary();
+        setStep(5);
+        // mark slot taken locally so calendar reflects it
+        if (state.slotsByDate[state.date]) {
+          state.slotsByDate[state.date] = state.slotsByDate[state.date].filter(function(t) { return t !== state.time; });
+        }
+        refreshNextSlots();
+      }).catch(function(err) {
+        state.submitting = false;
+        updateMeta(); updateNextState();
+        nextBtn.textContent = 'Foglalás megerősítése';
+        alert('Foglalási hiba: ' + (err.message || 'ismeretlen hiba') + '\n\nA stúdió közvetlen elérhetőség: +36 20 547 3128');
+      });
+    }
 
     function renderSummary() {
       summary.innerHTML = '';
@@ -1336,92 +1425,100 @@
         ['Név', state.name],
         ['Elérhetőség', state.phone + ' · ' + state.email]
       ];
+      if (state.bookingId) rows.push(['Foglalási szám', state.bookingId]);
       rows.forEach(function(r) {
         var d = document.createElement('div');
         d.innerHTML = '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
         summary.appendChild(d);
       });
-      confirmSub.innerHTML = 'Megerősítő e-mailt küldök <b>' + state.email + '</b> címre 5 percen belül.';
+      confirmSub.innerHTML = state.demoOnly
+        ? '<b>Demo mód:</b> e-mail nem ment ki — ha a backend csatlakozik, élesben mindkét fél kap visszaigazolót.'
+        : 'Megerősítő e-mailt küldök <b>' + state.email + '</b> címre 5 percen belül.';
     }
 
-    // ── Close handlers ──
-    modal.querySelectorAll('[data-bk-close]').forEach(function(el) {
-      el.addEventListener('click', closeModal);
-    });
+    // ─── Close handlers ───
+    modal.querySelectorAll('[data-bk-close]').forEach(function(el) { el.addEventListener('click', closeModal); });
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
     });
 
-    // ── Trigger wiring ──
-    // Anything that points to #book or #booking, or has data-book attribute, opens the modal
+    // ─── Trigger wiring ───
     function preselectService(svcKey) {
       var b = document.querySelector('.bk-svc[data-svc="' + svcKey + '"]');
       if (b) b.click();
     }
-    function preselectDateTime(dateStr, timeStr) {
-      // dateStr like "máj 23" or full label — we just jump to step 2
-      state.viewMonth = new Date(2026, 4, 1);
-      renderCalendar();
-    }
 
     document.querySelectorAll('a[href="#book"], a[href="#booking"]').forEach(function(a) {
-      a.addEventListener('click', function(e) {
-        e.preventDefault();
-        openModal();
-      });
+      a.addEventListener('click', function(e) { e.preventDefault(); openModal(); });
     });
 
-    // Hero "Időpontot kérek" + booking-section buttons + nav CTA
-    // (already covered above by href="#book"/"#booking")
-
-    // Slot list items in booking section — open modal at step 2/3
-    document.querySelectorAll('.slots li:not(.taken)').forEach(function(li) {
-      li.style.cursor = 'pointer';
-      li.addEventListener('click', function() {
-        var dateText = li.querySelector('span').textContent;
-        var timeText = li.querySelector('b').textContent;
-        // Try to map "Cs · máj 21" → date in May 2026
-        var dayMatch = dateText.match(/(\d+)/);
-        if (dayMatch) {
-          var d = new Date(2026, 4, parseInt(dayMatch[1], 10));
-          state.viewMonth = new Date(2026, 4, 1);
-          state.date = d.toISOString();
+    // Slot tiles in booking section
+    function wireSlotTiles() {
+      document.querySelectorAll('.slots li[data-date]').forEach(function(li) {
+        if (li._bound) return; li._bound = true;
+        li.style.cursor = 'pointer';
+        li.addEventListener('click', function() {
+          state.date = li.dataset.date;
+          state.time = li.dataset.time;
+          var d = new Date(state.date + 'T00:00:00');
+          state.viewMonth = new Date(d.getFullYear(), d.getMonth(), 1);
           state.dateLabel = DAYS_HU[d.getDay()] + ', ' + MONTHS[d.getMonth()] + ' ' + d.getDate() + '.';
-          state.time = timeText;
-        }
-        openModal();
-        // If no service yet, stay at step 1; otherwise jump ahead
-        setStep(state.service ? 4 : 1);
-        if (state.date) renderTimes();
+          openModal();
+          ensureSlots().then(function() {
+            renderTimes();
+            setStep(state.service ? 4 : 1);
+          });
+        });
       });
-    });
+    }
 
-    // Service rows in the services list — open modal pre-selected
-    var SVC_MAP = {
-      '01': 'hajfestes', '02': 'alkalmi', '03': 'keratin',
-      '04': 'vagas', '05': 'konty', '06': 'konzultacio'
-    };
+    // Service rows in services list
+    var SVC_MAP = { '01': 'hajfestes', '02': 'alkalmi', '03': 'keratin', '04': 'vagas', '05': 'konty', '06': 'konzultacio' };
     document.querySelectorAll('.row').forEach(function(row) {
       row.style.cursor = 'pointer';
       row.addEventListener('click', function() {
         var idx = row.querySelector('.row__idx');
-        if (idx && SVC_MAP[idx.textContent.trim()]) {
-          preselectService(SVC_MAP[idx.textContent.trim()]);
-        }
+        if (idx && SVC_MAP[idx.textContent.trim()]) preselectService(SVC_MAP[idx.textContent.trim()]);
         openModal();
-        setStep(2);
+        ensureSlots().then(function() { renderCalendar(); setStep(2); });
       });
     });
+
+    // ─── Live "next slots" list in #book section ───
+    function refreshNextSlots() {
+      var ul = document.querySelector('.slots ul');
+      if (!ul) return;
+      BK.loadSlots().then(function(slots) {
+        var future = slots.slice(0, 5);
+        if (!future.length) {
+          ul.innerHTML = '<li class="taken"><span>Nincs szabad időpont</span><b>—</b></li>';
+          return;
+        }
+        ul.innerHTML = future.map(function(s) {
+          var d = new Date(s.date + 'T00:00:00');
+          var dayShort = ['V','H','K','Sze','Cs','P','Szo'][d.getDay()];
+          var monthShort = ['jan','febr','márc','ápr','máj','jún','júl','aug','szept','okt','nov','dec'][d.getMonth()];
+          var label = dayShort + ' · ' + monthShort + ' ' + d.getDate();
+          return '<li data-date="' + s.date + '" data-time="' + s.time + '"><span>' + label + '</span><b>' + s.time + '</b></li>';
+        }).join('');
+        wireSlotTiles();
+      }).catch(function() {});
+    }
 
     // Reset state when closed
     modal.addEventListener('transitionend', function(e) {
       if (e.target === modal && !modal.classList.contains('open')) {
-        // soft reset for next open
+        // soft reset — keep service so reopen is faster
         state.step = 1;
         state.date = null; state.dateLabel = null; state.time = null;
-        // keep service so user doesn't have to re-pick if they reopen quickly
+        state.bookingId = null;
       }
     });
+
+    // ─── Init ───
+    refreshNextSlots();
+    // Pre-warm slot data so the modal opens instantly
+    ensureSlots();
   })();
   </script>
   <!-- ============================================
