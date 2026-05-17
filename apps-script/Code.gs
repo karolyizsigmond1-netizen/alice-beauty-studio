@@ -109,7 +109,9 @@ function adminAddDayPreset(password, dateIso, preset) {
   const sh = sheet_(SHEET_SLOTS);
   const data = sh.getDataRange().getValues();
   const have = {};
-  for (let i = 1; i < data.length; i++) have[data[i][0] + '|' + data[i][1]] = true;
+  for (let i = 1; i < data.length; i++) {
+    have[asDateStr_(data[i][0]) + '|' + asTimeStr_(data[i][1])] = true;
+  }
   const rows = [];
   times.forEach(function(t) {
     if (!have[dateIso + '|' + t]) rows.push([dateIso, t, 'free', '']);
@@ -125,7 +127,8 @@ function adminClearDay(password, dateIso) {
   if (!adminAuth(password)) throw new Error('Hibás jelszó');
   const sh = sheet_(SHEET_SLOTS);
   return batchDelete_(sh, function(row) {
-    return row[0] === dateIso && !(row[2] === 'booked' && row[3] && row[3] !== 'manual');
+    const bid = String(row[3] || '');
+    return asDateStr_(row[0]) === dateIso && !(String(row[2]) === 'booked' && bid && bid !== 'manual');
   });
 }
 
@@ -145,7 +148,9 @@ function adminBulkFill(password, days) {
   const sh = sheet_(SHEET_SLOTS);
   const data = sh.getDataRange().getValues();
   const have = {};
-  for (let i = 1; i < data.length; i++) have[data[i][0] + '|' + data[i][1]] = true;
+  for (let i = 1; i < data.length; i++) {
+    have[asDateStr_(data[i][0]) + '|' + asTimeStr_(data[i][1])] = true;
+  }
 
   const weekday = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
   const saturday = ['09:00','10:00','11:00','12:00','13:00','14:00'];
@@ -184,16 +189,15 @@ function adminToggleSlot(password, dateIso, time) {
   const sh = sheet_(SHEET_SLOTS);
   const data = sh.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === dateIso && data[i][1] === time) {
-      const status = data[i][2];
-      const bookingId = data[i][3];
-      if (status === 'booked' && bookingId) {
+    if (asDateStr_(data[i][0]) === dateIso && asTimeStr_(data[i][1]) === time) {
+      const status = String(data[i][2]);
+      const bookingId = String(data[i][3] || '');
+      if (status === 'booked' && bookingId && bookingId !== 'manual') {
         throw new Error('Ez egy valódi foglalás — a Foglalások fülön mondhatod le.');
       }
       const newStatus = status === 'free' ? 'booked' : 'free';
       sh.getRange(i + 1, 3).setValue(newStatus);
-      if (newStatus === 'free') sh.getRange(i + 1, 4).setValue('');
-      else sh.getRange(i + 1, 4).setValue('manual');
+      sh.getRange(i + 1, 4).setValue(newStatus === 'free' ? '' : 'manual');
       return { ok: true, status: newStatus };
     }
   }
@@ -209,7 +213,8 @@ function adminWipeFuture(password) {
   const sh = sheet_(SHEET_SLOTS);
   const today = todayIso_();
   return batchDelete_(sh, function(row) {
-    return row[0] >= today && !(row[2] === 'booked' && row[3] && row[3] !== 'manual');
+    const bid = String(row[3] || '');
+    return asDateStr_(row[0]) >= today && !(String(row[2]) === 'booked' && bid && bid !== 'manual');
   });
 }
 
@@ -251,9 +256,9 @@ function createBooking_(b) {
   const data = sh.getDataRange().getValues();
   let slotRow = -1;
   for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === b.date && data[i][1] === b.time) {
+    if (asDateStr_(data[i][0]) === b.date && asTimeStr_(data[i][1]) === b.time) {
       slotRow = i + 1;
-      if (data[i][2] !== 'free') throw new Error('Ez az időpont már nem szabad');
+      if (String(data[i][2]) !== 'free') throw new Error('Ez az időpont már nem szabad');
       break;
     }
   }
@@ -290,7 +295,12 @@ function cancelBooking_(bookingId) {
   const bdata = bk.getDataRange().getValues();
   let date = null, time = null, row = -1;
   for (let i = 1; i < bdata.length; i++) {
-    if (bdata[i][0] === bookingId) { row = i + 1; date = bdata[i][2]; time = bdata[i][3]; break; }
+    if (String(bdata[i][0]) === bookingId) {
+      row = i + 1;
+      date = asDateStr_(bdata[i][2]);
+      time = asTimeStr_(bdata[i][3]);
+      break;
+    }
   }
   if (row === -1) throw new Error('Nem található foglalás');
   bk.getRange(row, 12).setValue('cancelled');
@@ -298,7 +308,7 @@ function cancelBooking_(bookingId) {
   const sh = sheet_(SHEET_SLOTS);
   const sdata = sh.getDataRange().getValues();
   for (let i = 1; i < sdata.length; i++) {
-    if (sdata[i][0] === date && sdata[i][1] === time) {
+    if (asDateStr_(sdata[i][0]) === date && asTimeStr_(sdata[i][1]) === time) {
       sh.getRange(i + 1, 3).setValue('free');
       sh.getRange(i + 1, 4).setValue('');
       break;
@@ -314,7 +324,7 @@ function addSlot_(dateIso, time) {
   const sh = sheet_(SHEET_SLOTS);
   const data = sh.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === dateIso && data[i][1] === time) {
+    if (asDateStr_(data[i][0]) === dateIso && asTimeStr_(data[i][1]) === time) {
       throw new Error('Ez az időpont már létezik');
     }
   }
@@ -326,8 +336,10 @@ function removeSlot_(dateIso, time) {
   const sh = sheet_(SHEET_SLOTS);
   const data = sh.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === dateIso && data[i][1] === time) {
-      if (data[i][2] === 'booked') throw new Error('Foglalt időpontot először mondj le');
+    if (asDateStr_(data[i][0]) === dateIso && asTimeStr_(data[i][1]) === time) {
+      if (String(data[i][2]) === 'booked' && data[i][3] && String(data[i][3]) !== 'manual') {
+        throw new Error('Foglalt időpontot először mondj le');
+      }
       sh.deleteRow(i + 1);
       return { ok: true };
     }
@@ -344,10 +356,10 @@ function getPublicSlots_(from, to) {
   const toD = to || addDaysIso_(today, 60);
   const out = [];
   for (let i = 1; i < data.length; i++) {
-    const d = data[i][0];
-    if (d < fromD || d > toD) continue;
-    if (data[i][2] === 'free') {
-      out.push({ date: d, time: data[i][1] });
+    const d = asDateStr_(data[i][0]);
+    if (!d || d < fromD || d > toD) continue;
+    if (String(data[i][2]) === 'free') {
+      out.push({ date: d, time: asTimeStr_(data[i][1]) });
     }
   }
   out.sort(function(a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : a.time < b.time ? -1 : 1; });
@@ -364,7 +376,14 @@ function getAllSlots_() {
   const data = sh.getDataRange().getValues();
   const out = [];
   for (let i = 1; i < data.length; i++) {
-    out.push({ date: data[i][0], time: data[i][1], status: data[i][2], bookingId: data[i][3] || '' });
+    const dateStr = asDateStr_(data[i][0]);
+    if (!dateStr) continue;
+    out.push({
+      date: dateStr,
+      time: asTimeStr_(data[i][1]),
+      status: String(data[i][2] || 'free'),
+      bookingId: String(data[i][3] || '')
+    });
   }
   return out;
 }
@@ -374,19 +393,20 @@ function getAllBookings_() {
   const data = bk.getDataRange().getValues();
   const out = [];
   for (let i = 1; i < data.length; i++) {
+    if (!data[i][0]) continue;
     out.push({
-      bookingId: data[i][0],
-      created:   data[i][1] instanceof Date ? data[i][1].toISOString() : data[i][1],
-      date:      data[i][2],
-      time:      data[i][3],
-      service:   data[i][4],
-      serviceName: data[i][5],
-      serviceMeta: data[i][6],
-      name:      data[i][7],
-      phone:     data[i][8],
-      email:     data[i][9],
-      note:      data[i][10],
-      status:    data[i][11]
+      bookingId:   String(data[i][0]),
+      created:     data[i][1] instanceof Date ? data[i][1].toISOString() : String(data[i][1] || ''),
+      date:        asDateStr_(data[i][2]),
+      time:        asTimeStr_(data[i][3]),
+      service:     String(data[i][4] || ''),
+      serviceName: String(data[i][5] || ''),
+      serviceMeta: String(data[i][6] || ''),
+      name:        String(data[i][7] || ''),
+      phone:       String(data[i][8] || ''),
+      email:       String(data[i][9] || ''),
+      note:        String(data[i][10] || ''),
+      status:      String(data[i][11] || 'confirmed')
     });
   }
   out.sort(function(a, b) {
@@ -471,16 +491,45 @@ function ensureSetup_() {
     slots.getRange(1, 1, 1, 4).setFontWeight('bold').setBackground('#f3eced');
     slots.setFrozenRows(1);
   }
+  // Force columns to plain text so Sheets doesn't auto-parse '09:00' or '2026-05-20'
+  slots.getRange('A:D').setNumberFormat('@');
+
   const bk = ss.getSheetByName(SHEET_BOOKINGS) || ss.insertSheet(SHEET_BOOKINGS);
   if (bk.getLastRow() === 0) {
     bk.appendRow(['bookingId','created','date','time','service','serviceName','serviceMeta','name','phone','email','note','status']);
     bk.getRange(1, 1, 1, 12).setFontWeight('bold').setBackground('#f3eced');
     bk.setFrozenRows(1);
   }
+  bk.getRange('A:L').setNumberFormat('@');
+
   // Default sheet ("Sheet1") cleanup
   const def = ss.getSheetByName('Sheet1');
   if (def && ss.getSheets().length > 1) ss.deleteSheet(def);
   return ss;
+}
+
+/**
+ * Coerce a cell value (which may be a Date if Sheets auto-typed it) to YYYY-MM-DD string.
+ */
+function asDateStr_(v) {
+  if (v == null || v === '') return '';
+  if (v instanceof Date) return Utilities.formatDate(v, CONFIG.timezone, 'yyyy-MM-dd');
+  return String(v).trim();
+}
+
+/**
+ * Coerce a cell value to HH:MM string. Handles raw strings, Date (sheet auto-typed time),
+ * and numbers (Sheets stores time as a fraction-of-day number).
+ */
+function asTimeStr_(v) {
+  if (v == null || v === '') return '';
+  if (v instanceof Date) return Utilities.formatDate(v, CONFIG.timezone, 'HH:mm');
+  if (typeof v === 'number') {
+    const totalMin = Math.round(v * 24 * 60);
+    const h = Math.floor(totalMin / 60), m = totalMin % 60;
+    return ('0' + h).slice(-2) + ':' + ('0' + m).slice(-2);
+  }
+  return String(v).trim();
 }
 
 function sheet_(name) {

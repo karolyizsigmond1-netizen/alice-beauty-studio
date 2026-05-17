@@ -628,8 +628,9 @@
     bookingsList.innerHTML = '<div class="loading">Betöltés...</div>';
     allList.innerHTML = '<div class="empty-state">Betöltés...</div>';
     run('adminGetState').then(function(s) {
-      state.slots = s.slots || [];
-      state.bookings = s.bookings || [];
+      if (!s) throw new Error('Üres válasz a szervertől — futtasd újra a setup-ot, vagy redeploy.');
+      state.slots = (s && s.slots) || [];
+      state.bookings = (s && s.bookings) || [];
       renderCalendar();
       renderBookings();
       renderAllList();
