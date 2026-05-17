@@ -2094,6 +2094,10 @@ window["Profile"] = {"profile":{"business":"Alice Beauty Studio","headline":"","
         <!-- Page Specific Scripts -->
         
 <!-- ====== ALICE BOOKING WIDGET — injected into alicebeautystudio.hu mirror ====== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://script.google.com">
+<link rel="dns-prefetch" href="https://script.googleusercontent.com">
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Booking modal — designed to blend with alicebeautystudio.hu */
@@ -2153,10 +2157,7 @@ window["Profile"] = {"profile":{"business":"Alice Beauty Studio","headline":"","
 }
 .abk-title strong { font-weight: 600; }
 .abk-sub { color: #5a5856; font-size: 14px; }
-.abk-divider {
-  width: 32px; height: 1px; background: #b8956b;
-  margin: 18px auto 24px;
-}
+.abk-divider { width: 32px; height: 1px; background: #b8956b; margin: 18px auto 24px; }
 
 .abk-stepper {
   display: flex; justify-content: space-between; gap: 0;
@@ -2168,10 +2169,7 @@ window["Profile"] = {"profile":{"business":"Alice Beauty Studio","headline":"","
   top: 12px; left: 14%; right: 14%;
   height: 1px; background: #e9e6e0;
 }
-.abk-step {
-  position: relative; flex: 1;
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-}
+.abk-step { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .abk-step__bullet {
   width: 24px; height: 24px; border-radius: 50%;
   background: #fff; border: 1px solid #e9e6e0;
@@ -2179,30 +2177,20 @@ window["Profile"] = {"profile":{"business":"Alice Beauty Studio","headline":"","
   font-size: 11px; font-weight: 600; color: #8a8782;
   transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
-.abk-step__label {
-  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
-  color: #8a8782; font-weight: 500;
-}
+.abk-step__label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #8a8782; font-weight: 500; }
 .abk-step.is-done .abk-step__bullet { background: #b8956b; border-color: #b8956b; color: #fff; }
 .abk-step.is-done .abk-step__label { color: #8e7048; }
 .abk-step.is-current .abk-step__bullet { background: #2a2826; border-color: #2a2826; color: #fff; transform: scale(1.1); }
 .abk-step.is-current .abk-step__label { color: #2a2826; font-weight: 600; }
 
-.abk-body {
-  flex: 1; overflow-y: auto;
-  padding: 8px 40px 28px;
-}
+.abk-body { flex: 1; overflow-y: auto; padding: 8px 40px 28px; }
 .abk-body::-webkit-scrollbar { width: 5px; }
 .abk-body::-webkit-scrollbar-thumb { background: rgba(42,40,38,0.15); border-radius: 4px; }
 
 .abk-pane { display: none; animation: abkFade 0.35s ease; }
 .abk-pane.is-on { display: block; }
-@keyframes abkFade {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+@keyframes abkFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-/* SERVICES */
 .abk-services { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .abk-svc {
   text-align: left; background: #fff; border: 1px solid #e9e6e0;
@@ -2233,7 +2221,6 @@ window["Profile"] = {"profile":{"business":"Alice Beauty Studio","headline":"","
 .abk-svc__meta .dot { color: #b8956b; }
 .abk-svc__price { color: #2a2826; font-weight: 500; }
 
-/* CALENDAR */
 .abk-cal { border: 1px solid #e9e6e0; border-radius: 3px; padding: 20px; }
 .abk-cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .abk-cal-nav {
@@ -2264,7 +2251,6 @@ window["Profile"] = {"profile":{"business":"Alice Beauty Studio","headline":"","
 .abk-cal-day.is-today { font-weight: 700; color: #8e7048; }
 .abk-cal-day.is-selected { background: #2a2826; color: #fff; border-color: #2a2826; }
 
-/* TIMES */
 .abk-times { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 6px; }
 .abk-time {
   padding: 11px 6px; background: #fff;
@@ -2275,19 +2261,12 @@ window["Profile"] = {"profile":{"business":"Alice Beauty Studio","headline":"","
 }
 .abk-time:hover { border-color: #b8956b; background: #f4ede0; }
 .abk-time.is-selected { background: #2a2826; color: #fff; border-color: #2a2826; }
-.abk-times-empty {
-  grid-column: 1 / -1; text-align: center;
-  padding: 28px 16px; color: #8a8782; font-size: 13px;
-}
+.abk-times-empty { grid-column: 1 / -1; text-align: center; padding: 28px 16px; color: #8a8782; font-size: 13px; }
 
-/* FORM */
 .abk-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .abk-field { display: flex; flex-direction: column; gap: 5px; }
 .abk-field--full { grid-column: 1 / -1; }
-.abk-field label {
-  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
-  color: #8a8782; font-weight: 600;
-}
+.abk-field label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #8a8782; font-weight: 600; }
 .abk-field label .opt { text-transform: none; letter-spacing: 0; font-weight: 400; color: #b4b1ac; margin-left: 5px; font-size: 11px; }
 .abk-field input, .abk-field textarea {
   padding: 11px 13px; background: #fff;
@@ -2299,7 +2278,6 @@ window["Profile"] = {"profile":{"business":"Alice Beauty Studio","headline":"","
 .abk-field input::placeholder, .abk-field textarea::placeholder { color: #8a8782; }
 .abk-field input:focus, .abk-field textarea:focus { border-color: #b8956b; }
 
-/* CONFIRM */
 .abk-confirm { text-align: center; padding: 8px 0; }
 .abk-confirm__icon {
   width: 56px; height: 56px; margin: 0 auto 16px;
@@ -2312,23 +2290,13 @@ window["Profile"] = {"profile":{"business":"Alice Beauty Studio","headline":"","
 .abk-confirm h2 { font-size: 20px; font-weight: 600; color: #2a2826; margin-bottom: 6px; }
 .abk-confirm p { color: #5a5856; font-size: 13px; max-width: 360px; margin: 0 auto 18px; }
 .abk-confirm p b { color: #2a2826; }
-.abk-summary {
-  background: #fafaf8; border: 1px solid #e9e6e0; border-radius: 3px;
-  padding: 16px 20px; max-width: 380px; margin: 0 auto 16px; text-align: left;
-}
-.abk-summary__row {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
-  padding: 6px 0; border-bottom: 1px solid #f1efe9;
-}
+.abk-summary { background: #fafaf8; border: 1px solid #e9e6e0; border-radius: 3px; padding: 16px 20px; max-width: 380px; margin: 0 auto 16px; text-align: left; }
+.abk-summary__row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 6px 0; border-bottom: 1px solid #f1efe9; }
 .abk-summary__row:last-child { border-bottom: none; }
-.abk-summary__row dt {
-  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
-  color: #8a8782; font-weight: 600;
-}
+.abk-summary__row dt { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #8a8782; font-weight: 600; }
 .abk-summary__row dd { font-size: 13px; color: #2a2826; font-weight: 500; text-align: right; }
 .abk-confirm__note { margin-top: 8px; font-size: 11px; color: #8a8782; font-style: italic; }
 
-/* FOOTER */
 .abk-foot {
   padding: 16px 40px; border-top: 1px solid #f1efe9; background: #fafaf8;
   display: flex; justify-content: space-between; align-items: center; gap: 12px;
@@ -2431,8 +2399,8 @@ body.abk-locked { overflow: hidden; }
 
 <script>
 (function() {
-  // ── BACKEND CONFIG ──
   var BACKEND_URL = 'https://script.google.com/macros/s/AKfycbzLftcvTbEexHKwH6oKu7g0486v2fZjxtBnpvI2lyABfbAWGR5f6f7dZlB9MT4kbq8/exec';
+  var CACHE_TTL_MS = 30 * 1000;
 
   var MONTHS = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
   var DAYS_HU = ['Vasárnap','Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat'];
@@ -2448,7 +2416,9 @@ body.abk-locked { overflow: hidden; }
     services: [],
     slotsByDate: {},
     loadingSlots: false,
-    submitting: false
+    submitting: false,
+    servicesPromise: null,
+    slotsPromise: null
   };
 
   var $ = function(id) { return document.getElementById(id); };
@@ -2459,16 +2429,37 @@ body.abk-locked { overflow: hidden; }
   var steps = document.querySelectorAll('.abk-step');
   var panes = document.querySelectorAll('.abk-pane');
 
-  // ── BACKEND ──
+  // ── CACHE WRAPPER (sessionStorage, 30s TTL) ──
+  function cached(key, fetcher) {
+    try {
+      var raw = sessionStorage.getItem(key);
+      if (raw) {
+        var c = JSON.parse(raw);
+        if (c && c.ts && (Date.now() - c.ts) < CACHE_TTL_MS) return Promise.resolve(c.data);
+      }
+    } catch (e) {}
+    return fetcher().then(function(data) {
+      try { sessionStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
+      return data;
+    });
+  }
+  function bustCache() {
+    try { sessionStorage.removeItem('abk_cache_slots'); sessionStorage.removeItem('abk_cache_services'); } catch (e) {}
+  }
+
   function loadServices() {
-    return fetch(BACKEND_URL + '?action=services')
-      .then(function(r) { return r.json(); })
-      .then(function(j) { if (!j.ok) throw new Error(j.error); return j.services || []; });
+    return cached('abk_cache_services', function() {
+      return fetch(BACKEND_URL + '?action=services')
+        .then(function(r) { return r.json(); })
+        .then(function(j) { if (!j.ok) throw new Error(j.error); return j.services || []; });
+    });
   }
   function loadSlots() {
-    return fetch(BACKEND_URL + '?action=slots')
-      .then(function(r) { return r.json(); })
-      .then(function(j) { if (!j.ok) throw new Error(j.error); return j.slots || []; });
+    return cached('abk_cache_slots', function() {
+      return fetch(BACKEND_URL + '?action=slots')
+        .then(function(r) { return r.json(); })
+        .then(function(j) { if (!j.ok) throw new Error(j.error); return j.slots || []; });
+    });
   }
   function submitBookingRemote(payload) {
     return fetch(BACKEND_URL, {
@@ -2492,13 +2483,23 @@ body.abk-locked { overflow: hidden; }
     return out;
   }
 
-  // ── MODAL OPEN/CLOSE ──
+  // ── PRE-WARM: kick off both fetches the moment the script runs, in parallel ──
+  state.servicesPromise = loadServices().then(function(svcs) { state.services = svcs; renderServices(); return svcs; }).catch(function() {});
+  state.slotsPromise = loadSlots().then(function(slots) {
+    state.slotsByDate = {};
+    slots.forEach(function(s) {
+      if (!state.slotsByDate[s.date]) state.slotsByDate[s.date] = [];
+      state.slotsByDate[s.date].push(s.time);
+    });
+    Object.keys(state.slotsByDate).forEach(function(k) { state.slotsByDate[k].sort(); });
+    return slots;
+  }).catch(function() {});
+
   function openModal() {
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('abk-locked');
     setStep(state.step);
-    ensureData();
   }
   function closeModal() {
     modal.classList.remove('is-open');
@@ -2506,31 +2507,6 @@ body.abk-locked { overflow: hidden; }
     document.body.classList.remove('abk-locked');
   }
 
-  // ── DATA LOAD ──
-  function ensureData() {
-    if (!state.services.length) {
-      loadServices().then(function(svcs) {
-        state.services = svcs;
-        renderServices();
-      }).catch(function(e) {
-        svcGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#b25b53;font-size:13px;">Nem sikerült betölteni a szolgáltatásokat: ' + (e.message || e) + '</div>';
-      });
-    }
-    if (Object.keys(state.slotsByDate).length === 0 && !state.loadingSlots) {
-      state.loadingSlots = true;
-      loadSlots().then(function(slots) {
-        state.slotsByDate = {};
-        slots.forEach(function(s) {
-          if (!state.slotsByDate[s.date]) state.slotsByDate[s.date] = [];
-          state.slotsByDate[s.date].push(s.time);
-        });
-        Object.keys(state.slotsByDate).forEach(function(k) { state.slotsByDate[k].sort(); });
-        state.loadingSlots = false;
-      }).catch(function() { state.loadingSlots = false; });
-    }
-  }
-
-  // ── STEPS ──
   function setStep(n) {
     state.step = n;
     panes.forEach(function(p) { p.classList.toggle('is-on', +p.dataset.pane === n); });
@@ -2554,9 +2530,8 @@ body.abk-locked { overflow: hidden; }
     if (state.serviceName) parts.push('<b>' + state.serviceName + '</b>');
     if (state.dateLabel) parts.push(state.dateLabel);
     if (state.time) parts.push(state.time);
-    if (!parts.length) {
-      metaEl.innerHTML = ['Válassz egy szolgáltatást','Válassz egy napot','Válassz egy időpontot','Add meg az adataidat'][state.step - 1];
-    } else metaEl.innerHTML = parts.join(' · ');
+    if (!parts.length) metaEl.innerHTML = ['Válassz egy szolgáltatást','Válassz egy napot','Válassz egy időpontot','Add meg az adataidat'][state.step - 1];
+    else metaEl.innerHTML = parts.join(' · ');
   }
   function updateNextState() {
     if (state.submitting) { nextBtn.disabled = true; return; }
@@ -2568,20 +2543,17 @@ body.abk-locked { overflow: hidden; }
   }
   function formValid() {
     var fd = new FormData(form);
-    var n = (fd.get('name')||'').toString().trim();
-    var p = (fd.get('phone')||'').toString().trim();
-    var e = (fd.get('email')||'').toString().trim();
-    return n.length >= 2 && p.length >= 6 && /.+@.+\..+/.test(e);
+    return (fd.get('name')||'').toString().trim().length >= 2
+      && (fd.get('phone')||'').toString().trim().length >= 6
+      && /.+@.+\..+/.test((fd.get('email')||'').toString().trim());
   }
 
-  // ── RENDER ──
   function renderServices() {
     if (!state.services.length) {
       svcGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#8a8782;font-size:13px;">Nincs szolgáltatás. Az admin még nem adott hozzá.</div>';
       return;
     }
     svcGrid.innerHTML = state.services.map(function(s) {
-      var meta = (s.duration || '') + (s.duration && s.price ? ' · ' : '') + (s.price || '');
       return '<button class="abk-svc" data-svc="' + s.key + '" data-duration-min="' + (s.durationMin || 60) + '" type="button">' +
         (s.featured ? '<span class="abk-svc__feature">★ Legkeresettebb</span>' : '') +
         '<span class="abk-svc__name">' + escHtml(s.name) + '</span>' +
@@ -2613,9 +2585,7 @@ body.abk-locked { overflow: hidden; }
     var today = new Date(); today.setHours(0,0,0,0);
     var todayStr = isoDate(today);
     calGrid.innerHTML = '';
-    for (var i = 0; i < offset; i++) {
-      var em = document.createElement('div'); em.className = 'abk-cal-day is-empty'; calGrid.appendChild(em);
-    }
+    for (var i = 0; i < offset; i++) { var em = document.createElement('div'); em.className = 'abk-cal-day is-empty'; calGrid.appendChild(em); }
     for (var d = 1; d <= days; d++) {
       var dt = new Date(year, month, d);
       var iso = isoDate(dt);
@@ -2666,9 +2636,7 @@ body.abk-locked { overflow: hidden; }
       var b = document.createElement('button');
       b.type = 'button'; b.className = 'abk-time'; b.textContent = t;
       if (state.time === t) b.classList.add('is-selected');
-      b.addEventListener('click', function() {
-        state.time = t; renderTimes(); updateMeta(); updateNextState();
-      });
+      b.addEventListener('click', function() { state.time = t; renderTimes(); updateMeta(); updateNextState(); });
       timesEl.appendChild(b);
     });
   }
@@ -2703,6 +2671,7 @@ body.abk-locked { overflow: hidden; }
       state.submitting = false;
       state.bookingId = res.bookingId;
       state.emailWarning = res.emailWarning;
+      bustCache();
       renderSummary();
       setStep(5);
     }).catch(function(err) {
@@ -2736,13 +2705,9 @@ body.abk-locked { overflow: hidden; }
 
   function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>]/g, function(c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]; }); }
 
-  // ── CLOSE handlers ──
   modal.querySelectorAll('[data-abk-close]').forEach(function(el) { el.addEventListener('click', closeModal); });
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
-  });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && modal.classList.contains('is-open')) closeModal(); });
 
-  // ── INTERCEPT existing booking links ──
   document.addEventListener('click', function(e) {
     var a = e.target.closest('a');
     if (!a) return;
@@ -2753,10 +2718,9 @@ body.abk-locked { overflow: hidden; }
     }
   }, true);
 
-  // ── Floating "Try the booking" badge (so demo viewers find it) ──
   var badge = document.createElement('button');
   badge.id = 'abkBadge';
-  badge.innerHTML = '✿ Új online foglalás — kattints ide';
+  badge.innerHTML = '✿ Új online foglalás';
   badge.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#2a2826;color:#fff;border:none;padding:14px 22px;border-radius:100px;font-family:Open Sans,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.04em;cursor:pointer;box-shadow:0 10px 30px -8px rgba(42,40,38,0.4);z-index:9999;transition:all 0.3s;';
   badge.addEventListener('mouseenter', function() { badge.style.transform = 'translateY(-2px)'; badge.style.background = '#8e7048'; });
   badge.addEventListener('mouseleave', function() { badge.style.transform = ''; badge.style.background = '#2a2826'; });

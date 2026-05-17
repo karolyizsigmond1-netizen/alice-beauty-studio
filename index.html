@@ -7,6 +7,8 @@
   <meta name="description" content="Mesterfodrászat és alkalmi szépség Zugló szívében. Egy vendég, egy figyelem." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="dns-prefetch" href="https://script.googleusercontent.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Serif:ital@0;1&family=Pinyon+Script&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -1129,6 +1131,31 @@
     var BK = (function() {
       var url = (window.BK_CONFIG && window.BK_CONFIG.backendUrl) || '';
       var STORAGE_KEY = 'bk_demo_state_v1';
+      var CACHE_TTL_MS = 30 * 1000; // 30 seconds
+
+      // Cache wrapper: hits sessionStorage, falls through to network on miss/stale.
+      // Apps Script roundtrips are ~1s each; this makes the 2nd+ open feel instant.
+      function cached(key, fetcher) {
+        try {
+          var raw = sessionStorage.getItem(key);
+          if (raw) {
+            var c = JSON.parse(raw);
+            if (c && c.ts && (Date.now() - c.ts) < CACHE_TTL_MS) {
+              return Promise.resolve(c.data);
+            }
+          }
+        } catch (e) {}
+        return fetcher().then(function(data) {
+          try { sessionStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
+          return data;
+        });
+      }
+      function bustCache() {
+        try {
+          sessionStorage.removeItem('bk_cache_slots');
+          sessionStorage.removeItem('bk_cache_services');
+        } catch (e) {}
+      }
 
       function read() {
         try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { slots: seedSlots(), bookings: [] }; }
@@ -1138,9 +1165,11 @@
 
       function loadServices() {
         if (url) {
-          return fetch(url + '?action=services', { method: 'GET' })
-            .then(function(r) { return r.json(); })
-            .then(function(j) { if (!j.ok) throw new Error(j.error); return j.services || []; });
+          return cached('bk_cache_services', function() {
+            return fetch(url + '?action=services', { method: 'GET' })
+              .then(function(r) { return r.json(); })
+              .then(function(j) { if (!j.ok) throw new Error(j.error); return j.services || []; });
+          });
         }
         return Promise.resolve([]);
       }
@@ -1175,9 +1204,11 @@
         // returns Promise<Array<{date, time}>> for free slots
         loadSlots: function() {
           if (url) {
-            return fetch(url + '?action=slots', { method: 'GET' })
-              .then(function(r) { return r.json(); })
-              .then(function(j) { if (!j.ok) throw new Error(j.error); return j.slots || []; });
+            return cached('bk_cache_slots', function() {
+              return fetch(url + '?action=slots', { method: 'GET' })
+                .then(function(r) { return r.json(); })
+                .then(function(j) { if (!j.ok) throw new Error(j.error); return j.slots || []; });
+            });
           }
           var s = read();
           return Promise.resolve(s.slots.filter(function(x) { return x.status === 'free'; })
@@ -1222,7 +1253,8 @@
           s.bookings.push(Object.assign({ bookingId: bookingId, created: new Date().toISOString() }, payload));
           write(s);
           return Promise.resolve({ ok: true, bookingId: bookingId, demo: true });
-        }
+        },
+        bustCache: bustCache
       };
     })();
 
@@ -1541,6 +1573,7 @@
         if (state.slotsByDate[state.date]) {
           state.slotsByDate[state.date] = state.slotsByDate[state.date].filter(function(t) { return blockedTimes.indexOf(t) === -1; });
         }
+        BK.bustCache(); // next viewer gets fresh data
         refreshNextSlots();
       }).catch(function(err) {
         state.submitting = false;
