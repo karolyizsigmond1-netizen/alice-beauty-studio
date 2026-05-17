@@ -787,9 +787,16 @@
       var times = g.slots.map(function(s) {
         var cls = 'all-time';
         var badge = '';
+        var title = '';
         if (s.status === 'booked' && s.bookingId === 'manual') { cls += ' m'; badge = ' <span class="badge">letiltva</span>'; }
-        else if (s.status === 'booked') { cls += ' x'; badge = ' <span class="badge">foglalt</span>'; }
-        return '<button class="' + cls + '" data-date="' + g.date + '" data-time="' + s.time + '">' + s.time + badge + '</button>';
+        else if (s.status === 'booked') {
+          cls += ' x';
+          var bk = state.bookings.filter(function(b) { return b.bookingId === s.bookingId; })[0];
+          var name = bk && bk.name ? bk.name : s.bookingId;
+          badge = ' <span class="badge">' + escapeHtml(name) + '</span>';
+          title = ' title="' + escapeHtml(name + (bk && bk.phone ? ' · ' + bk.phone : '')) + '"';
+        }
+        return '<button class="' + cls + '" data-date="' + g.date + '" data-time="' + s.time + '"' + title + '>' + s.time + badge + '</button>';
       }).join('');
       return '<div class="all-group">' +
         '<div class="all-group__date"><b>' + label + '</b><span>' + g.date + '</span></div>' +
@@ -1121,11 +1128,18 @@
       var labelClass = s.status === 'free' ? 'ok' : (isManual ? 'manual' : 'x');
       var labelText = s.status === 'free' ? 'Szabad' : (isManual ? 'Letiltva' : 'Foglalva');
 
+      // Look up booking name (multi-slot bookings share one bookingId)
+      var bookingName = '';
+      if (isRealBooked) {
+        var bk = state.bookings.filter(function(b) { return b.bookingId === s.bookingId; })[0];
+        if (bk && bk.name) bookingName = bk.name;
+      }
+
       var li = document.createElement('li');
       li.className = 'slot-item' + (isManual ? ' is-manual' : (s.status === 'booked' ? ' is-booked' : ''));
       li.innerHTML =
         '<span class="slot-time">' + s.time + '</span>' +
-        '<span class="slot-label ' + labelClass + '">' + labelText + (isRealBooked ? ' · ' + s.bookingId : '') + '</span>' +
+        '<span class="slot-label ' + labelClass + '">' + labelText + (isRealBooked && bookingName ? ' · ' + escapeHtml(bookingName) : (isRealBooked ? ' · ' + s.bookingId : '')) + '</span>' +
         '<div class="slot-actions">' +
           '<button class="slot-mini toggle" title="' + (s.status === 'free' ? 'Letiltás (foglaltra váltás)' : 'Szabaddá tétel') + '"' + (isRealBooked ? ' disabled' : '') + '>' +
             (s.status === 'free'
