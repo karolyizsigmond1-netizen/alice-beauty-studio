@@ -131,6 +131,85 @@ function adminCancelBooking(password, bookingId) {
   return cancelBooking_(bookingId);
 }
 
+/**
+ * One-click bulk fill: adds 1-hour slots to the next N days.
+ * Weekdays (H–P): 09–17 (9 slots), Saturday: 09–14 (6 slots), Sunday: skipped.
+ * Existing slots are kept; duplicates skipped.
+ */
+function adminBulkFill(password, days) {
+  if (!adminAuth(password)) throw new Error('Hibás jelszó');
+  days = Math.max(1, Math.min(parseInt(days || 30, 10), 90));
+  const sh = sheet_(SHEET_SLOTS);
+  const data = sh.getDataRange().getValues();
+  const have = {};
+  for (let i = 1; i < data.length; i++) have[data[i][0] + '|' + data[i][1]] = true;
+
+  const weekday = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
+  const saturday = ['09:00','10:00','11:00','12:00','13:00','14:00'];
+  let added = 0, skipped = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (let n = 1; n <= days; n++) {
+    const d = new Date(today.getTime() + n * 86400000);
+    const dow = d.getDay(); // 0=Sun
+    if (dow === 0) continue;
+    const iso = Utilities.formatDate(d, CONFIG.timezone, 'yyyy-MM-dd');
+    const pool = dow === 6 ? saturday : weekday;
+    pool.forEach(function(t) {
+      if (have[iso + '|' + t]) { skipped++; return; }
+      sh.appendRow([iso, t, 'free', '']);
+      have[iso + '|' + t] = true;
+      added++;
+    });
+  }
+  return { added: added, skipped: skipped, days: days };
+}
+
+/**
+ * Toggle a slot's status: free → booked-manual, booked-manual → free.
+ * Real bookings (with bookingId) cannot be toggled this way — cancel them instead.
+ */
+function adminToggleSlot(password, dateIso, time) {
+  if (!adminAuth(password)) throw new Error('Hibás jelszó');
+  const sh = sheet_(SHEET_SLOTS);
+  const data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === dateIso && data[i][1] === time) {
+      const status = data[i][2];
+      const bookingId = data[i][3];
+      if (status === 'booked' && bookingId) {
+        throw new Error('Ez egy valódi foglalás — a Foglalások fülön mondhatod le.');
+      }
+      const newStatus = status === 'free' ? 'booked' : 'free';
+      sh.getRange(i + 1, 3).setValue(newStatus);
+      if (newStatus === 'free') sh.getRange(i + 1, 4).setValue('');
+      else sh.getRange(i + 1, 4).setValue('manual');
+      return { ok: true, status: newStatus };
+    }
+  }
+  throw new Error('Nem található időpont');
+}
+
+/**
+ * Wipe ALL future slots (booked included won't be touched if they have a real bookingId).
+ * Use for "start over" with bulk fill.
+ */
+function adminWipeFuture(password) {
+  if (!adminAuth(password)) throw new Error('Hibás jelszó');
+  const sh = sheet_(SHEET_SLOTS);
+  const data = sh.getDataRange().getValues();
+  const today = todayIso_();
+  const toDelete = [];
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (data[i][0] >= today && !(data[i][2] === 'booked' && data[i][3])) {
+      toDelete.push(i + 1);
+    }
+  }
+  toDelete.forEach(function(r) { sh.deleteRow(r); });
+  return { removed: toDelete.length };
+}
+
 // ============== BOOKING ==============
 
 function createBooking_(b) {

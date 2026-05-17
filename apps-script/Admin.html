@@ -6,16 +6,18 @@
 <title>Alice Beauty · Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --paper: #faf5f6;
     --blush: #f3eced;
+    --blush-deep: #ebe1e3;
     --plum: #2a1822;
     --plum-soft: #4a2e3d;
     --rose: #c4847f;
     --rose-deep: #a4615c;
     --mute: #8e7680;
+    --mute-soft: #b4a0a8;
     --line: rgba(42,24,34,0.12);
     --line-faint: rgba(42,24,34,0.06);
     --ok: #6fa86b;
@@ -30,50 +32,34 @@
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
   }
+
   /* AUTH GATE */
-  .gate {
-    min-height: 100vh; display: flex; align-items: center; justify-content: center;
-    padding: 24px;
-  }
+  .gate { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
   .gate-card {
-    background: var(--paper);
-    border-radius: 20px;
-    padding: 48px 40px;
+    background: var(--paper); border-radius: 20px; padding: 48px 40px;
     width: 100%; max-width: 380px;
     box-shadow: 0 30px 60px -20px rgba(42,24,34,0.2);
     text-align: center;
   }
   .gate-mark {
-    width: 56px; height: 56px;
-    margin: 0 auto 20px;
-    border-radius: 50%;
-    background: var(--plum);
-    color: var(--paper);
+    width: 56px; height: 56px; margin: 0 auto 20px;
+    border-radius: 50%; background: var(--plum); color: var(--paper);
     display: grid; place-items: center;
-    font-family: 'DM Serif Display', serif;
-    font-size: 28px;
+    font-family: 'DM Serif Display', serif; font-size: 28px;
     box-shadow: 0 0 0 6px rgba(196,132,127,0.2);
   }
-  .gate h1 {
-    font-family: 'DM Serif Display', serif;
-    font-weight: 400; font-size: 28px;
-    margin-bottom: 6px;
-  }
+  .gate h1 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 28px; margin-bottom: 6px; }
   .gate h1 em { font-family: 'Instrument Serif', serif; font-style: italic; color: var(--rose-deep); }
   .gate p { color: var(--mute); margin-bottom: 28px; font-style: italic; font-family: 'Instrument Serif', serif; font-size: 16px; }
   .gate input {
-    width: 100%; padding: 14px 18px;
-    background: var(--blush);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    font-family: inherit; font-size: 15px;
-    color: var(--plum);
-    outline: none;
-    margin-bottom: 12px;
-    transition: border-color 0.3s;
+    width: 100%; padding: 14px 18px; background: var(--blush);
+    border: 1px solid var(--line); border-radius: 10px;
+    font-family: inherit; font-size: 15px; color: var(--plum);
+    outline: none; margin-bottom: 12px; transition: border-color 0.3s;
   }
   .gate input:focus { border-color: var(--rose-deep); background: #fff; }
   .gate-err { color: var(--bad); font-size: 13px; min-height: 18px; margin-bottom: 8px; }
+
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 13px 24px;
@@ -92,10 +78,12 @@
   .btn--danger { background: var(--bad); border-color: var(--bad); color: #fff; }
   .btn--danger:hover:not(:disabled) { background: #8e302a; border-color: #8e302a; }
   .btn--block { width: 100%; }
+  .btn--big { padding: 16px 28px; font-size: 14px; }
 
   /* APP */
   .app { display: none; min-height: 100vh; }
   .app.is-on { display: block; }
+
   .topbar {
     background: var(--paper);
     border-bottom: 1px solid var(--line);
@@ -114,23 +102,60 @@
   .icon-btn:hover { background: var(--plum); color: var(--paper); border-color: var(--plum); }
   .icon-btn svg { width: 16px; height: 16px; }
 
-  .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 24px 60px; }
 
-  /* CALENDAR LAYOUT */
+  /* QUICK ACTIONS BANNER */
+  .banner {
+    background: linear-gradient(135deg, var(--plum) 0%, var(--plum-soft) 100%);
+    color: var(--paper);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 20px;
+    align-items: center;
+  }
+  .banner__text h2 {
+    font-family: 'DM Serif Display', serif; font-weight: 400;
+    font-size: 22px; line-height: 1.2; margin-bottom: 6px;
+  }
+  .banner__text h2 em { font-family: 'Instrument Serif', serif; font-style: italic; color: var(--rose); }
+  .banner__text p {
+    font-size: 14px; opacity: 0.8; line-height: 1.5;
+    font-family: 'Instrument Serif', serif; font-style: italic;
+  }
+  .banner .btn { background: var(--paper); color: var(--plum); border-color: var(--paper); }
+  .banner .btn:hover:not(:disabled) { background: var(--rose); color: var(--paper); border-color: var(--rose); }
+  .banner__actions { display: flex; gap: 8px; flex-direction: column; align-items: flex-end; }
+  .banner__secondary {
+    font-size: 11px; opacity: 0.6; cursor: pointer; text-decoration: underline;
+    background: none; border: none; color: var(--paper); font-family: inherit;
+    padding: 4px; letter-spacing: 0.04em;
+  }
+  .banner__secondary:hover { opacity: 1; color: var(--rose); }
+
+  @media (max-width: 720px) {
+    .banner { grid-template-columns: 1fr; }
+    .banner__actions { align-items: stretch; }
+    .banner .btn { width: 100%; }
+  }
+
+  /* PANELS */
   .panel { display: none; }
   .panel.is-on { display: block; animation: fade .4s ease; }
   @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-  .cal-layout { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; }
+  .cal-layout { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
   @media (max-width: 880px) { .cal-layout { grid-template-columns: 1fr; } }
 
-  .card { background: var(--paper); border-radius: 14px; padding: 24px; border: 1px solid var(--line-faint); }
+  .card { background: var(--paper); border-radius: 14px; padding: 22px; border: 1px solid var(--line-faint); }
 
-  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .cal-nav { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: transparent; cursor: pointer; display: grid; place-items: center; color: var(--plum); transition: all 0.3s; }
   .cal-nav:hover { background: var(--plum); color: var(--paper); border-color: var(--plum); }
   .cal-nav svg { width: 14px; height: 14px; }
-  .cal-month { font-family: 'DM Serif Display', serif; font-size: 22px; }
+  .cal-month { font-family: 'DM Serif Display', serif; font-size: 20px; }
   .cal-dows { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-bottom: 6px; }
   .cal-dows span { text-align: center; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); padding: 6px 0; font-weight: 500; }
   .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
@@ -140,57 +165,95 @@
     font-size: 13px; color: var(--plum); background: transparent;
     transition: all 0.2s; position: relative; padding: 4px; font-family: inherit;
   }
-  .cal-day .num { font-weight: 500; }
-  .cal-day .dots { display: flex; gap: 2px; margin-top: 3px; }
-  .cal-day .dots i { width: 4px; height: 4px; border-radius: 50%; background: var(--ok); }
-  .cal-day .dots i.booked { background: var(--rose-deep); }
+  .cal-day .num { font-weight: 500; line-height: 1; }
+  .cal-day .counts { font-size: 9px; margin-top: 4px; letter-spacing: 0.04em; color: var(--mute); font-weight: 500; }
+  .cal-day .counts b { color: var(--ok); }
+  .cal-day .counts .x { color: var(--rose-deep); }
   .cal-day:hover:not(.empty):not(.past) { background: rgba(196,132,127,0.18); border-color: rgba(164,97,92,0.3); }
   .cal-day.empty { cursor: default; }
   .cal-day.past { opacity: 0.3; cursor: not-allowed; }
   .cal-day.today .num { color: var(--rose-deep); font-weight: 700; }
   .cal-day.selected { background: var(--plum); color: var(--paper); border-color: var(--plum); }
-  .cal-day.selected .dots i { background: var(--rose); }
+  .cal-day.selected .counts { color: var(--rose); }
+  .cal-day.selected .counts b { color: var(--ok); }
+  .cal-day.has-slots { background: rgba(111,168,107,0.10); }
 
-  .day-pane h3 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 22px; margin-bottom: 6px; }
-  .day-pane .day-sub { color: var(--mute); font-style: italic; font-family: 'Instrument Serif', serif; font-size: 15px; margin-bottom: 20px; }
-  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
-  .chip {
-    padding: 7px 13px; font-size: 11px; letter-spacing: 0.06em;
-    background: var(--blush); border: 1px solid var(--line); border-radius: 100px;
-    cursor: pointer; font-family: inherit; color: var(--plum);
-    transition: all 0.3s;
+  .legend { display: flex; gap: 16px; align-items: center; font-size: 11px; color: var(--mute); margin-top: 12px; flex-wrap: wrap; }
+  .legend i { width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; display: inline-block; }
+  .legend .free { background: var(--ok); }
+  .legend .booked { background: var(--rose-deep); }
+  .legend .empty-day { width: 14px; height: 14px; background: rgba(111,168,107,0.10); border-radius: 4px; }
+
+  /* DAY PANE */
+  .day-pane-empty {
+    text-align: center; padding: 40px 24px; color: var(--mute);
+    font-family: 'Instrument Serif', serif; font-style: italic; font-size: 16px; line-height: 1.55;
   }
-  .chip:hover { background: var(--plum); color: var(--paper); border-color: var(--plum); }
+  .day-pane-empty svg { width: 36px; height: 36px; margin-bottom: 12px; color: var(--rose-deep); opacity: 0.5; }
 
-  .add-row { display: flex; gap: 8px; margin-bottom: 18px; }
+  .day-pane h3 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 22px; margin-bottom: 4px; }
+  .day-pane .day-sub { color: var(--mute); font-style: italic; font-family: 'Instrument Serif', serif; font-size: 14px; margin-bottom: 18px; }
+
+  .add-row { display: flex; gap: 8px; margin-bottom: 16px; align-items: stretch; }
   .add-row input {
-    flex: 1; padding: 11px 14px; background: var(--blush); border: 1px solid var(--line); border-radius: 8px;
+    flex: 1; padding: 10px 14px; background: var(--blush); border: 1px solid var(--line); border-radius: 8px;
     font-family: inherit; font-size: 14px; color: var(--plum); outline: none;
   }
   .add-row input:focus { border-color: var(--rose-deep); background: #fff; }
-  .add-row button { padding: 11px 18px; }
+
+  .quick-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .chip {
+    padding: 6px 12px; font-size: 11px; letter-spacing: 0.04em;
+    background: transparent; border: 1px solid var(--line); border-radius: 100px;
+    cursor: pointer; font-family: inherit; color: var(--plum-soft);
+    transition: all 0.25s;
+  }
+  .chip:hover:not(:disabled) { background: var(--plum); color: var(--paper); border-color: var(--plum); }
+  .chip:disabled { opacity: 0.5; cursor: wait; }
 
   .slot-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
   .slot-item {
-    display: flex; align-items: center; justify-content: space-between;
+    display: grid; grid-template-columns: auto 1fr auto; gap: 12px;
+    align-items: center;
     padding: 12px 14px;
     background: var(--blush); border-radius: 8px;
     font-size: 14px;
+    transition: background 0.2s;
   }
-  .slot-item.is-booked { background: rgba(164,97,92,0.08); border-left: 3px solid var(--rose-deep); }
-  .slot-time { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--plum); }
-  .slot-status {
-    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
-    padding: 3px 8px; border-radius: 100px; font-weight: 500;
+  .slot-item.is-booked { background: rgba(164,97,92,0.10); }
+  .slot-item.is-manual { background: rgba(192,133,43,0.10); }
+  .slot-time {
+    font-family: 'DM Serif Display', serif; font-size: 19px; color: var(--plum);
+    min-width: 60px;
   }
-  .slot-status.free { background: rgba(111,168,107,0.18); color: #3f6c3b; }
-  .slot-status.booked { background: rgba(164,97,92,0.2); color: var(--rose-deep); }
+  .slot-label {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--mute); font-weight: 500;
+  }
+  .slot-label.ok { color: var(--ok); }
+  .slot-label.x { color: var(--rose-deep); }
+  .slot-label.manual { color: var(--warn); }
   .slot-actions { display: flex; gap: 6px; align-items: center; }
-  .slot-mini { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: transparent; cursor: pointer; display: grid; place-items: center; color: var(--plum); transition: all 0.25s; }
-  .slot-mini:hover { background: var(--bad); color: #fff; border-color: var(--bad); }
-  .slot-mini svg { width: 12px; height: 12px; }
+  .slot-mini {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--paper);
+    cursor: pointer; display: grid; place-items: center;
+    color: var(--plum); transition: all 0.25s; padding: 0;
+  }
+  .slot-mini:hover:not(:disabled) { transform: translateY(-1px); }
+  .slot-mini.toggle:hover:not(:disabled) { background: var(--warn); color: #fff; border-color: var(--warn); }
+  .slot-mini.delete:hover:not(:disabled) { background: var(--bad); color: #fff; border-color: var(--bad); }
+  .slot-mini:disabled { opacity: 0.4; cursor: not-allowed; }
+  .slot-mini svg { width: 14px; height: 14px; }
 
-  .empty-state { padding: 32px 16px; text-align: center; color: var(--mute); font-style: italic; font-family: 'Instrument Serif', serif; }
+  .empty-state {
+    padding: 32px 16px; text-align: center;
+    color: var(--mute); font-style: italic; font-family: 'Instrument Serif', serif; font-size: 15px;
+    background: var(--blush); border-radius: 10px; line-height: 1.55;
+  }
+
+  .day-footer { margin-top: 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .day-summary { font-size: 12px; color: var(--mute); font-family: 'Instrument Serif', serif; font-style: italic; }
 
   /* BOOKINGS PANEL */
   .bookings-list { display: flex; flex-direction: column; gap: 10px; }
@@ -216,25 +279,23 @@
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(40px);
     background: var(--plum); color: var(--paper);
-    padding: 12px 20px; border-radius: 100px;
+    padding: 12px 22px; border-radius: 100px;
     font-size: 13px; font-weight: 500;
     opacity: 0; pointer-events: none;
     transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
     box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
     z-index: 100;
+    max-width: calc(100vw - 48px);
+    text-align: center;
   }
   .toast.is-on { opacity: 1; transform: translateX(-50%) translateY(0); }
   .toast.is-err { background: var(--bad); }
+  .toast.is-ok { background: var(--ok); }
 
   /* HEADER */
-  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
-  .section-head h2 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 28px; }
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 16px; flex-wrap: wrap; }
+  .section-head h2 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 24px; }
   .section-head .stat { font-size: 13px; color: var(--mute); font-style: italic; font-family: 'Instrument Serif', serif; }
-
-  .legend { display: flex; gap: 16px; align-items: center; font-size: 12px; color: var(--mute); margin-top: 14px; }
-  .legend i { width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; display: inline-block; }
-  .legend .free { background: var(--ok); }
-  .legend .booked { background: var(--rose-deep); }
 
   .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--mute); font-style: italic; font-family: 'Instrument Serif', serif; }
 </style>
@@ -246,7 +307,7 @@
   <div class="gate-card">
     <div class="gate-mark">A</div>
     <h1>Alice <em>Admin</em></h1>
-    <p>Add meg a jelszót a folytatáshoz.</p>
+    <p>Add meg a jelszót.</p>
     <input type="password" id="gatePw" placeholder="Jelszó" autocomplete="current-password" />
     <div class="gate-err" id="gateErr"></div>
     <button class="btn btn--block" id="gateBtn">Belépés</button>
@@ -261,8 +322,8 @@
       <span>Alice <em>Admin</em></span>
     </div>
     <div class="tabs">
-      <button class="tab is-on" data-tab="cal">Időpontok</button>
-      <button class="tab" data-tab="bookings">Foglalások <span id="bkCount"></span></button>
+      <button class="tab is-on" data-tab="cal">📅 Időpontok</button>
+      <button class="tab" data-tab="bookings">📋 Foglalások <span id="bkCount"></span></button>
     </div>
     <div class="ctas">
       <button class="icon-btn" id="refreshBtn" title="Frissítés">
@@ -281,19 +342,27 @@
 
     <!-- CALENDAR PANEL -->
     <div class="panel is-on" data-panel="cal">
-      <div class="section-head">
-        <h2>Időpontok kezelése</h2>
-        <span class="stat" id="calStat"></span>
+
+      <!-- BIG QUICK-FILL BANNER -->
+      <div class="banner" id="banner">
+        <div class="banner__text">
+          <h2 id="bannerTitle">Üres <em>naptár?</em></h2>
+          <p id="bannerSub">Egy kattintással feltöltöm a következő 30 nap összes szabad időpontját — hétközi 9–17, szombaton 9–14, vasárnap zárva.</p>
+        </div>
+        <div class="banner__actions">
+          <button class="btn btn--big" id="autoFillBtn">✿ 30 nap automatikus feltöltése</button>
+          <button class="banner__secondary" id="wipeBtn">vagy: összes jövőbeli időpont törlése</button>
+        </div>
       </div>
 
       <div class="cal-layout">
         <div class="card">
           <div class="cal-head">
-            <button class="cal-nav" id="calPrev">
+            <button class="cal-nav" id="calPrev" title="Előző hónap">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
             <div class="cal-month" id="calMonth"></div>
-            <button class="cal-nav" id="calNext">
+            <button class="cal-nav" id="calNext" title="Következő hónap">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
             </button>
           </div>
@@ -302,29 +371,39 @@
           </div>
           <div class="cal-grid" id="calGrid"></div>
           <div class="legend">
+            <span><i class="empty-day" style="border-radius:4px;"></i>napon vannak időpontok</span>
             <span><i class="free"></i>szabad</span>
             <span><i class="booked"></i>foglalt</span>
           </div>
         </div>
 
-        <div class="card day-pane">
-          <h3 id="dayTitle">Válassz egy napot</h3>
-          <p class="day-sub" id="daySub">Bal oldalt koppints egy napra, és itt kezelheted a hozzá tartozó időpontokat.</p>
+        <div class="card day-pane" id="dayPane">
+          <div class="day-pane-empty" id="dayEmpty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+            <div>Bal oldalt koppints egy napra,<br/>és itt látod az időpontjait.</div>
+          </div>
 
           <div id="dayContent" style="display:none">
-            <div class="preset-row">
-              <button class="chip" data-preset="standard">+ Hét napjai (9–17)</button>
+            <h3 id="dayTitle"></h3>
+            <div class="day-sub" id="daySub"></div>
+
+            <div class="add-row">
+              <input type="time" id="addTime" step="900" />
+              <button class="btn" id="addBtn">+ Hozzáad</button>
+            </div>
+
+            <div class="quick-row">
+              <button class="chip" data-preset="standard" title="9, 10, 11, 12, 13, 14, 15, 16, 17">+ Hétköznap (9–17)</button>
               <button class="chip" data-preset="morning">+ Délelőtt (9–12)</button>
               <button class="chip" data-preset="afternoon">+ Délután (13–17)</button>
               <button class="chip" data-preset="saturday">+ Szombat (9–14)</button>
             </div>
-            <div class="add-row">
-              <input type="time" id="addTime" step="900" />
-              <button class="btn" id="addBtn">Hozzáad</button>
-            </div>
+
             <ul class="slot-list" id="slotList"></ul>
-            <div style="margin-top: 16px; text-align: right;">
-              <button class="btn btn--ghost" id="clearDayBtn">Mind törlése (nem-foglalt)</button>
+
+            <div class="day-footer">
+              <span class="day-summary" id="daySummary"></span>
+              <button class="btn btn--ghost" id="clearDayBtn">Mind törlése</button>
             </div>
           </div>
         </div>
@@ -365,25 +444,32 @@
   var gate = $('gate'), app = $('app');
   var gatePw = $('gatePw'), gateBtn = $('gateBtn'), gateErr = $('gateErr');
   var calGrid = $('calGrid'), calMonth = $('calMonth');
-  var calStat = $('calStat'), bkStat = $('bkStat'), bkCount = $('bkCount');
-  var dayTitle = $('dayTitle'), daySub = $('daySub'), dayContent = $('dayContent');
+  var bannerTitle = $('bannerTitle'), bannerSub = $('bannerSub');
+  var bkStat = $('bkStat'), bkCount = $('bkCount');
+  var dayTitle = $('dayTitle'), daySub = $('daySub'), daySummary = $('daySummary');
+  var dayContent = $('dayContent'), dayEmpty = $('dayEmpty');
   var slotList = $('slotList'), addTime = $('addTime'), addBtn = $('addBtn');
   var clearDayBtn = $('clearDayBtn');
   var bookingsList = $('bookingsList');
   var toastEl = $('toast');
+  var autoFillBtn = $('autoFillBtn'), wipeBtn = $('wipeBtn');
 
   // ── HELPERS ──
-  function toast(msg, err) {
+  function toast(msg, kind) {
     toastEl.textContent = msg;
-    toastEl.classList.toggle('is-err', !!err);
+    toastEl.classList.remove('is-err', 'is-ok');
+    if (kind === 'err') toastEl.classList.add('is-err');
+    else if (kind === 'ok') toastEl.classList.add('is-ok');
     toastEl.classList.add('is-on');
     clearTimeout(toast._t);
-    toast._t = setTimeout(function() { toastEl.classList.remove('is-on'); }, 2600);
+    toast._t = setTimeout(function() { toastEl.classList.remove('is-on'); }, 3000);
   }
-  function isoDate(d) { return d.toISOString().slice(0, 10); }
+  function isoDate(d) {
+    return d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
   function parseIso(iso) { return new Date(iso + 'T00:00:00'); }
 
-  function run(fn /*, ...args, success, failure */) {
+  function run(fn) {
     var args = Array.prototype.slice.call(arguments, 1);
     return new Promise(function(resolve, reject) {
       google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(null, args);
@@ -393,23 +479,18 @@
   // ── AUTH ──
   function tryLogin(p) {
     gateErr.textContent = '';
-    gateBtn.disabled = true;
-    gateBtn.textContent = 'Ellenőrzés...';
+    gateBtn.disabled = true; gateBtn.textContent = 'Ellenőrzés...';
     run('adminAuth', p).then(function(ok) {
-      gateBtn.disabled = false;
-      gateBtn.textContent = 'Belépés';
+      gateBtn.disabled = false; gateBtn.textContent = 'Belépés';
       if (ok) {
-        pw = p;
-        sessionStorage.setItem('aliceAdminPw', p);
+        pw = p; sessionStorage.setItem('aliceAdminPw', p);
         showApp();
       } else {
         gateErr.textContent = 'Hibás jelszó.';
-        gatePw.value = '';
-        gatePw.focus();
+        gatePw.value = ''; gatePw.focus();
       }
     }).catch(function(e) {
-      gateBtn.disabled = false;
-      gateBtn.textContent = 'Belépés';
+      gateBtn.disabled = false; gateBtn.textContent = 'Belépés';
       gateErr.textContent = e.message || 'Hiba történt';
     });
   }
@@ -452,9 +533,10 @@
       state.bookings = s.bookings || [];
       renderCalendar();
       renderBookings();
-      updateStats();
+      updateBanner();
+      if (state.selectedDate) renderDayPane();
     }).catch(function(e) {
-      toast('Betöltési hiba: ' + (e.message || e), true);
+      toast('Betöltési hiba: ' + (e.message || e), 'err');
     });
   }
   $('refreshBtn').addEventListener('click', loadAll);
@@ -462,21 +544,56 @@
   $('sheetBtn').addEventListener('click', function() {
     run('adminGetSheetUrl', pw).then(function(url) {
       if (url) window.open(url, '_blank');
-    }).catch(function(e) { toast(e.message || 'Hiba', true); });
+    }).catch(function(e) { toast(e.message || 'Hiba', 'err'); });
   });
 
-  function updateStats() {
-    var free = state.slots.filter(function(s) { return s.status === 'free'; }).length;
-    var booked = state.slots.filter(function(s) { return s.status === 'booked'; }).length;
-    calStat.textContent = free + ' szabad · ' + booked + ' foglalt időpont';
-    var future = state.bookings.filter(function(b) { return b.status === 'confirmed' && (b.date + ' ' + b.time) >= todayNowKey(); });
-    bkStat.textContent = future.length + ' jövőbeli foglalás · ' + state.bookings.length + ' összesen';
-    bkCount.textContent = future.length ? '· ' + future.length : '';
+  function updateBanner() {
+    var today = isoDate(new Date());
+    var future = state.slots.filter(function(s) { return s.date >= today && s.status === 'free'; }).length;
+    var booked = state.slots.filter(function(s) { return s.date >= today && s.status === 'booked'; }).length;
+    if (future === 0 && booked === 0) {
+      bannerTitle.innerHTML = 'Üres <em>naptár?</em>';
+      bannerSub.textContent = 'Egy kattintással feltöltöm a következő 30 nap összes szabad időpontját — hétközi 9–17, szombaton 9–14, vasárnap zárva.';
+      autoFillBtn.textContent = '✿ 30 nap automatikus feltöltése';
+    } else {
+      bannerTitle.innerHTML = future + ' szabad <em>időpont</em> · ' + booked + ' foglalt';
+      bannerSub.textContent = 'Tovább szeretnél? Az automatikus feltöltés a meglévő mellé tesz új időpontokat — duplikációkat kihagy.';
+      autoFillBtn.textContent = '✿ Tovább a következő 30 napra';
+    }
+    bkCount.textContent = state.bookings.filter(function(b) {
+      return b.status === 'confirmed' && (b.date + ' ' + b.time) >= todayNowKey();
+    }).length || '';
+    var futureBookings = state.bookings.filter(function(b) { return b.status === 'confirmed' && (b.date + ' ' + b.time) >= todayNowKey(); });
+    bkStat.textContent = futureBookings.length + ' jövőbeli · ' + state.bookings.length + ' összesen';
   }
   function todayNowKey() {
     var n = new Date();
     return isoDate(n) + ' ' + ('0' + n.getHours()).slice(-2) + ':' + ('0' + n.getMinutes()).slice(-2);
   }
+
+  // ── BIG ACTIONS ──
+  autoFillBtn.addEventListener('click', function() {
+    autoFillBtn.disabled = true;
+    autoFillBtn.textContent = 'Feltöltés folyamatban...';
+    run('adminBulkFill', pw, 30).then(function(r) {
+      autoFillBtn.disabled = false;
+      toast(r.added + ' új időpont · ' + r.skipped + ' már létezett', 'ok');
+      loadAll();
+    }).catch(function(e) {
+      autoFillBtn.disabled = false;
+      toast(e.message || 'Hiba', 'err');
+      updateBanner();
+    });
+  });
+
+  wipeBtn.addEventListener('click', function() {
+    if (!confirm('Biztosan törlöd az ÖSSZES jövőbeli szabad időpontot?\n\n(Valódi foglalások érintetlenek maradnak.)')) return;
+    run('adminWipeFuture', pw).then(function(r) {
+      toast(r.removed + ' időpont törölve', 'ok');
+      state.selectedDate = null;
+      loadAll();
+    }).catch(function(e) { toast(e.message || 'Hiba', 'err'); });
+  });
 
   // ── CALENDAR ──
   function renderCalendar() {
@@ -502,11 +619,16 @@
       var slotsOnDay = state.slots.filter(function(s) { return s.date === iso; });
       var freeCount = slotsOnDay.filter(function(s) { return s.status === 'free'; }).length;
       var bookedCount = slotsOnDay.filter(function(s) { return s.status === 'booked'; }).length;
-      var dots = '<div class="dots">';
-      for (var k = 0; k < Math.min(freeCount, 4); k++) dots += '<i></i>';
-      for (var k = 0; k < Math.min(bookedCount, 4); k++) dots += '<i class="booked"></i>';
-      dots += '</div>';
-      btn.innerHTML = '<span class="num">' + d + '</span>' + dots;
+      var counts = '';
+      if (freeCount || bookedCount) {
+        counts = '<div class="counts">';
+        if (freeCount) counts += '<b>' + freeCount + '</b>';
+        if (freeCount && bookedCount) counts += ' · ';
+        if (bookedCount) counts += '<span class="x">' + bookedCount + '</span>';
+        counts += '</div>';
+        btn.classList.add('has-slots');
+      }
+      btn.innerHTML = '<span class="num">' + d + '</span>' + counts;
 
       if (iso < todayStr) btn.classList.add('past');
       if (iso === todayStr) btn.classList.add('today');
@@ -537,15 +659,15 @@
   function renderDayPane() {
     var iso = state.selectedDate;
     if (!iso) {
-      dayTitle.textContent = 'Válassz egy napot';
-      daySub.textContent = 'Bal oldalt koppints egy napra, és itt kezelheted a hozzá tartozó időpontokat.';
+      dayEmpty.style.display = 'block';
       dayContent.style.display = 'none';
       return;
     }
     var d = parseIso(iso);
+    dayEmpty.style.display = 'none';
+    dayContent.style.display = 'block';
     dayTitle.textContent = DAYS_HU[d.getDay()] + ', ' + MONTHS_HU[d.getMonth()] + ' ' + d.getDate() + '.';
     daySub.textContent = iso;
-    dayContent.style.display = 'block';
     renderSlotList();
   }
 
@@ -554,32 +676,75 @@
     var rows = state.slots.filter(function(s) { return s.date === iso; });
     rows.sort(function(a, b) { return a.time < b.time ? -1 : 1; });
     slotList.innerHTML = '';
+
     if (rows.length === 0) {
-      slotList.innerHTML = '<div class="empty-state">Nincs még időpont ezen a napon. Adj hozzá felül.</div>';
+      slotList.innerHTML = '<div class="empty-state">Nincs még időpont ezen a napon.<br/>Adj hozzá felül kézzel, vagy használj egy beállítást.</div>';
+      daySummary.textContent = '0 időpont';
       return;
     }
+
+    var freeCount = rows.filter(function(s) { return s.status === 'free'; }).length;
+    var bookedCount = rows.filter(function(s) { return s.status === 'booked'; }).length;
+    daySummary.textContent = freeCount + ' szabad · ' + bookedCount + ' foglalt';
+
     rows.forEach(function(s) {
+      var isManual = (s.status === 'booked' && s.bookingId === 'manual');
+      var isRealBooked = (s.status === 'booked' && s.bookingId && s.bookingId !== 'manual');
+      var labelClass = s.status === 'free' ? 'ok' : (isManual ? 'manual' : 'x');
+      var labelText = s.status === 'free' ? 'Szabad' : (isManual ? 'Letiltva' : 'Foglalva');
+
       var li = document.createElement('li');
-      li.className = 'slot-item' + (s.status === 'booked' ? ' is-booked' : '');
+      li.className = 'slot-item' + (isManual ? ' is-manual' : (s.status === 'booked' ? ' is-booked' : ''));
       li.innerHTML =
-        '<div><span class="slot-time">' + s.time + '</span></div>' +
+        '<span class="slot-time">' + s.time + '</span>' +
+        '<span class="slot-label ' + labelClass + '">' + labelText + (isRealBooked ? ' · ' + s.bookingId : '') + '</span>' +
         '<div class="slot-actions">' +
-          '<span class="slot-status ' + s.status + '">' + (s.status === 'free' ? 'Szabad' : 'Foglalt') + '</span>' +
-          (s.status === 'free'
-            ? '<button class="slot-mini" title="Törlés"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>'
-            : '<button class="slot-mini" title="Foglalás részletei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></button>') +
+          '<button class="slot-mini toggle" title="' + (s.status === 'free' ? 'Letiltás (foglaltra váltás)' : 'Szabaddá tétel') + '"' + (isRealBooked ? ' disabled' : '') + '>' +
+            (s.status === 'free'
+              ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
+              : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>') +
+          '</button>' +
+          '<button class="slot-mini delete" title="Időpont törlése"' + (isRealBooked ? ' disabled' : '') + '>' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>' +
+          '</button>' +
         '</div>';
-      if (s.status === 'free') {
-        li.querySelector('.slot-mini').addEventListener('click', function() {
+
+      var toggleBtn = li.querySelector('.toggle');
+      var deleteBtn = li.querySelector('.delete');
+
+      if (!isRealBooked) {
+        toggleBtn.addEventListener('click', function() {
+          toggleBtn.disabled = true;
+          run('adminToggleSlot', pw, iso, s.time).then(function(r) {
+            // update local state
+            var match = state.slots.filter(function(x) { return x.date === iso && x.time === s.time; })[0];
+            if (match) {
+              match.status = r.status;
+              match.bookingId = r.status === 'booked' ? 'manual' : '';
+            }
+            renderCalendar(); renderSlotList(); updateBanner();
+            toast(r.status === 'free' ? 'Szabadra állítva.' : 'Letiltva.', 'ok');
+          }).catch(function(e) {
+            toggleBtn.disabled = false;
+            toast(e.message || 'Hiba', 'err');
+          });
+        });
+        deleteBtn.addEventListener('click', function() {
           if (!confirm('Töröljem a ' + s.time + ' időpontot?')) return;
+          deleteBtn.disabled = true;
           run('adminRemoveSlot', pw, iso, s.time).then(function() {
             state.slots = state.slots.filter(function(x) { return !(x.date === iso && x.time === s.time); });
-            renderCalendar(); renderSlotList(); updateStats();
-            toast('Időpont törölve.');
-          }).catch(function(e) { toast(e.message || 'Hiba', true); });
+            renderCalendar(); renderSlotList(); updateBanner();
+            toast('Időpont törölve.', 'ok');
+          }).catch(function(e) {
+            deleteBtn.disabled = false;
+            toast(e.message || 'Hiba', 'err');
+          });
         });
       } else {
-        li.querySelector('.slot-mini').addEventListener('click', function() {
+        // real booking — both buttons disabled, click goes to bookings tab
+        li.style.cursor = 'pointer';
+        li.addEventListener('click', function() {
           document.querySelector('.tab[data-tab="bookings"]').click();
         });
       }
@@ -589,43 +754,45 @@
 
   addBtn.addEventListener('click', function() {
     var t = addTime.value;
-    if (!t || !state.selectedDate) return;
+    if (!t || !state.selectedDate) { toast('Adj meg egy időpontot.', 'err'); return; }
     addBtn.disabled = true;
     run('adminAddSlot', pw, state.selectedDate, t).then(function() {
       state.slots.push({ date: state.selectedDate, time: t, status: 'free', bookingId: '' });
-      renderCalendar(); renderSlotList(); updateStats();
+      renderCalendar(); renderSlotList(); updateBanner();
       addTime.value = '';
-      toast('Időpont hozzáadva.');
+      toast(t + ' hozzáadva.', 'ok');
       addBtn.disabled = false;
-    }).catch(function(e) { toast(e.message || 'Hiba', true); addBtn.disabled = false; });
+    }).catch(function(e) {
+      toast(e.message || 'Hiba', 'err');
+      addBtn.disabled = false;
+    });
   });
 
   document.querySelectorAll('.chip').forEach(function(c) {
     c.addEventListener('click', function() {
       if (!state.selectedDate) return;
-      var preset = c.dataset.preset;
       c.disabled = true;
-      run('adminAddDayPreset', pw, state.selectedDate, preset).then(function(r) {
+      run('adminAddDayPreset', pw, state.selectedDate, c.dataset.preset).then(function(r) {
         c.disabled = false;
-        toast(r.added + ' időpont hozzáadva.');
+        toast(r.added + ' időpont hozzáadva.', 'ok');
         loadAll();
-      }).catch(function(e) { toast(e.message || 'Hiba', true); c.disabled = false; });
+      }).catch(function(e) { toast(e.message || 'Hiba', 'err'); c.disabled = false; });
     });
   });
 
   clearDayBtn.addEventListener('click', function() {
     if (!state.selectedDate) return;
-    if (!confirm('Biztosan törlöd az összes nem-foglalt időpontot erre a napra?')) return;
+    if (!confirm('Biztosan törlöd az összes (nem-valódi-foglalás) időpontot erre a napra?')) return;
     run('adminClearDay', pw, state.selectedDate).then(function(r) {
-      toast(r.removed + ' időpont törölve.');
+      toast(r.removed + ' időpont törölve.', 'ok');
       loadAll();
-    }).catch(function(e) { toast(e.message || 'Hiba', true); });
+    }).catch(function(e) { toast(e.message || 'Hiba', 'err'); });
   });
 
   // ── BOOKINGS ──
   function renderBookings() {
     if (!state.bookings.length) {
-      bookingsList.innerHTML = '<div class="empty-state">Még nincs foglalás.</div>';
+      bookingsList.innerHTML = '<div class="empty-state">Még nincs foglalás. Amikor érkezik egy, itt fog megjelenni.</div>';
       return;
     }
     bookingsList.innerHTML = '';
@@ -653,11 +820,11 @@
     });
     bookingsList.querySelectorAll('.booking-cancel').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        if (!confirm('Biztosan lemondod ezt a foglalást?')) return;
+        if (!confirm('Biztosan lemondod ezt a foglalást?\n\n(A vendég NEM kap automatikus értesítést — hívd fel.)')) return;
         run('adminCancelBooking', pw, btn.dataset.id).then(function() {
-          toast('Foglalás lemondva.');
+          toast('Foglalás lemondva, idősáv felszabadítva.', 'ok');
           loadAll();
-        }).catch(function(e) { toast(e.message || 'Hiba', true); });
+        }).catch(function(e) { toast(e.message || 'Hiba', 'err'); });
       });
     });
   }
@@ -670,7 +837,6 @@
 
   // ── INIT ──
   if (pw) {
-    // try silent login
     run('adminAuth', pw).then(function(ok) {
       if (ok) showApp();
       else { sessionStorage.removeItem('aliceAdminPw'); pw = ''; }
