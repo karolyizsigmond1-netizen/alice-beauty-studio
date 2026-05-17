@@ -366,8 +366,8 @@
     background: var(--paper); border: 1px solid var(--line-faint); border-radius: 12px;
     padding: 18px 20px;
     display: grid;
-    grid-template-columns: 28px 1.6fr 1fr 1fr auto auto;
-    gap: 12px; align-items: center;
+    grid-template-columns: 24px 1.4fr 0.8fr 0.6fr 0.8fr auto auto;
+    gap: 10px; align-items: center;
   }
   .svc-row.is-featured { border-color: rgba(196,132,127,0.5); background: linear-gradient(to right, rgba(196,132,127,0.06), var(--paper) 30%); }
   .svc-row.is-new { border-color: rgba(111,168,107,0.4); background: rgba(111,168,107,0.05); }
@@ -575,8 +575,9 @@
         </div>
       </div>
 
-      <p style="margin-top:24px;color:#8e7680;font-size:13px;font-style:italic;font-family:'Instrument Serif',serif;">
-        A "Legkeresettebb" jelölésű szolgáltatás külön kiemelt módon jelenik meg a weboldalon — egyszerre csak egyet érdemes így megjelölni.
+      <p style="margin-top:24px;color:#8e7680;font-size:13px;font-style:italic;font-family:'Instrument Serif',serif;line-height:1.6;">
+        ✦ <b>Címke</b> az, ami a vendég látja (pl. „60–90 perc"). A <b>Tényleges perc</b> az, amennyi idősávot a foglaló valóban lefoglal (30 perces lépcsőkkel; pl. 90 perc = 3 idősáv). Ha egy szolgáltatás 90 perces és valaki 10:00-ra foglal, akkor 10:00, 10:30 és 11:00 mind foglaltra kerül.<br/>
+        ✦ A „Legkeresettebb" jelölésű szolgáltatás külön kiemelt módon jelenik meg — egyszerre csak egyet érdemes így megjelölni.
       </p>
     </div>
 
@@ -824,8 +825,12 @@
           '<input type="text" data-field="name" value="' + escAttr(s.name) + '" placeholder="Pl. Hajfestés & balayage"/>' +
         '</div>' +
         '<div class="svc-field">' +
-          '<label>Időtartam</label>' +
-          '<input type="text" data-field="duration" value="' + escAttr(s.duration) + '" placeholder="60–90 min"/>' +
+          '<label>Címke (megjelenő)</label>' +
+          '<input type="text" data-field="duration" value="' + escAttr(s.duration) + '" placeholder="60–90 perc"/>' +
+        '</div>' +
+        '<div class="svc-field">' +
+          '<label>Tényleges perc</label>' +
+          '<input type="number" min="30" step="30" data-field="durationMin" value="' + (s.durationMin || 60) + '" placeholder="60"/>' +
         '</div>' +
         '<div class="svc-field">' +
           '<label>Ár</label>' +
@@ -848,7 +853,14 @@
       // Input handlers
       row.querySelectorAll('input[data-field], textarea[data-field]').forEach(function(inp) {
         inp.addEventListener('input', function() {
-          state.services[idx][inp.dataset.field] = inp.value;
+          var v = inp.value;
+          if (inp.dataset.field === 'durationMin') {
+            v = parseInt(v, 10) || 60;
+            if (v < 30) v = 30;
+            // round up to next 30
+            v = Math.ceil(v / 30) * 30;
+          }
+          state.services[idx][inp.dataset.field] = v;
           markServicesDirty();
         });
       });
@@ -897,6 +909,7 @@
       name: '',
       description: '',
       duration: '',
+      durationMin: 60,
       price: '',
       featured: false
     });

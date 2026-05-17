@@ -24,13 +24,17 @@ const SHEET_BOOKINGS = 'Bookings';
 const SHEET_SETTINGS = 'Settings';
 const SHEET_SERVICES = 'Services';
 
+// durationMin is what's used internally to block consecutive 30-min slots.
+// `duration` is just the display label shown to customers.
+// All durationMin values should be multiples of 30 (the slot granularity).
+const SLOT_GRANULARITY_MIN = 30;
 const DEFAULT_SERVICES = [
-  { order: 1, key: 'hajfestes',   name: 'Hajfestés & balayage',     description: 'Bőrtónushoz illesztett, természetes átmenetek és divatos színek prémium festékekkel.', duration: '90–180 min', price: '26 000 Ft-tól', featured: false },
-  { order: 2, key: 'alkalmi',     name: 'Alkalmi konty & smink',    description: 'Esküvő, ballagás, fotózás. Teljes look egy kézből — próbafestéssel és kipróbálással.', duration: '60–120 min', price: '22 000 Ft-tól', featured: true },
-  { order: 3, key: 'keratin',     name: 'Keratinos kezelés',        description: 'Selymes, fényes, könnyen kezelhető haj — hetekre szóló simaság, töredezés nélkül.',   duration: '120 min',    price: '32 000 Ft-tól', featured: false },
-  { order: 4, key: 'vagas',       name: 'Hajvágás & formázás',      description: 'Arcformához igazított vonalvezetés. Ollóval — nem gépezettel.',                       duration: '45–60 min',  price: '9 000 Ft-tól',  featured: false },
-  { order: 5, key: 'konty',       name: 'Klasszikus konty',         description: 'Esküvőhöz, alkalomhoz, hosszú estéhez. Tartós, kényelmes, fotózásálló.',              duration: '75 min',     price: '18 000 Ft-tól', featured: false },
-  { order: 6, key: 'konzultacio', name: 'Konzultáció',              description: '30 perces beszélgetés — szín, forma, alkalom. Mielőtt bármit elköteleznél.',         duration: '30 min',     price: 'díjmentes',     featured: false }
+  { order: 1, key: 'hajfestes',   name: 'Hajfestés & balayage',     description: 'Bőrtónushoz illesztett, természetes átmenetek és divatos színek prémium festékekkel.', duration: '90–180 perc', durationMin: 120, price: '26 000 Ft-tól', featured: false },
+  { order: 2, key: 'alkalmi',     name: 'Alkalmi konty & smink',    description: 'Esküvő, ballagás, fotózás. Teljes look egy kézből — próbafestéssel és kipróbálással.', duration: '60–120 perc', durationMin: 90,  price: '22 000 Ft-tól', featured: true },
+  { order: 3, key: 'keratin',     name: 'Keratinos kezelés',        description: 'Selymes, fényes, könnyen kezelhető haj — hetekre szóló simaság, töredezés nélkül.',   duration: '120 perc',    durationMin: 120, price: '32 000 Ft-tól', featured: false },
+  { order: 4, key: 'vagas',       name: 'Hajvágás & formázás',      description: 'Arcformához igazított vonalvezetés. Ollóval — nem gépezettel.',                       duration: '45–60 perc',  durationMin: 60,  price: '9 000 Ft-tól',  featured: false },
+  { order: 5, key: 'konty',       name: 'Klasszikus konty',         description: 'Esküvőhöz, alkalomhoz, hosszú estéhez. Tartós, kényelmes, fotózásálló.',              duration: '75 perc',     durationMin: 90,  price: '18 000 Ft-tól', featured: false },
+  { order: 6, key: 'konzultacio', name: 'Konzultáció',              description: '30 perces beszélgetés — szín, forma, alkalom. Mielőtt bármit elköteleznél.',         duration: '30 perc',     durationMin: 30,  price: 'díjmentes',     featured: false }
 ];
 
 const PROP_SHEET_ID = 'BOOKING_SHEET_ID';
@@ -123,11 +127,12 @@ function adminRemoveSlot(password, dateIso, time) {
 
 function adminAddDayPreset(password, dateIso, preset) {
   if (!adminAuth(password)) throw new Error('Hibás jelszó');
+  // Half-hour granularity so different service durations stack cleanly
   const times = ({
-    standard:  ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'],
-    morning:   ['09:00','10:00','11:00','12:00'],
-    afternoon: ['13:00','14:00','15:00','16:00','17:00'],
-    saturday:  ['09:00','10:00','11:00','12:00','13:00','14:00']
+    standard:  ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'],
+    morning:   ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30'],
+    afternoon: ['13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'],
+    saturday:  ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30']
   })[preset] || [];
   const sh = sheet_(SHEET_SLOTS);
   const data = sh.getDataRange().getValues();
@@ -175,8 +180,9 @@ function adminBulkFill(password, days) {
     have[asDateStr_(data[i][0]) + '|' + asTimeStr_(data[i][1])] = true;
   }
 
-  const weekday = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
-  const saturday = ['09:00','10:00','11:00','12:00','13:00','14:00'];
+  // 30-min granularity so multi-slot bookings (90, 120 min) line up cleanly
+  const weekday = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
+  const saturday = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30'];
   const rowsToAdd = [];
   let skipped = 0;
   const today = new Date();
@@ -265,21 +271,46 @@ function createBooking_(b) {
   if (!/.+@.+\..+/.test(b.email)) throw new Error('Érvénytelen e-mail');
 
   ensureSetup_();
-  const sh = sheet_(SHEET_SLOTS);
-  const data = sh.getDataRange().getValues();
-  let slotRow = -1;
-  for (let i = 1; i < data.length; i++) {
-    if (asDateStr_(data[i][0]) === b.date && asTimeStr_(data[i][1]) === b.time) {
-      slotRow = i + 1;
-      if (String(data[i][2]) !== 'free') throw new Error('Ez az időpont már nem szabad');
-      break;
+
+  // Look up service duration so we know how many consecutive slots to block
+  let durationMin = parseInt(b.durationMin, 10);
+  if (!durationMin || durationMin <= 0) {
+    // Fall back to service definition
+    if (b.service) {
+      const svcs = getServices_();
+      const svc = svcs.filter(function(s) { return s.key === b.service; })[0];
+      if (svc) durationMin = svc.durationMin;
     }
   }
-  if (slotRow === -1) throw new Error('Nem létező időpont');
+  if (!durationMin || durationMin <= 0) durationMin = SLOT_GRANULARITY_MIN;
+  durationMin = Math.ceil(durationMin / SLOT_GRANULARITY_MIN) * SLOT_GRANULARITY_MIN;
+  const slotsNeeded = durationMin / SLOT_GRANULARITY_MIN;
+
+  // Find the starting slot and verify N consecutive 30-min slots are free
+  const sh = sheet_(SHEET_SLOTS);
+  const data = sh.getDataRange().getValues();
+  const expectedTimes = consecutiveTimes_(b.time, slotsNeeded); // ['10:00','10:30','11:00']
+  const rowByTime = {};
+  for (let i = 1; i < data.length; i++) {
+    if (asDateStr_(data[i][0]) !== b.date) continue;
+    const t = asTimeStr_(data[i][1]);
+    rowByTime[t] = { row: i + 1, status: String(data[i][2]), bookingId: String(data[i][3] || '') };
+  }
+  // Verify every expected slot exists and is free
+  for (let k = 0; k < expectedTimes.length; k++) {
+    const t = expectedTimes[k];
+    const r = rowByTime[t];
+    if (!r) throw new Error('Hiányzó idősáv ehhez a szolgáltatáshoz: ' + t + '. Az adminnak hozzá kell adnia.');
+    if (r.status !== 'free') throw new Error('Az időpont egy része már foglalt: ' + t);
+  }
 
   const bookingId = 'BK-' + Utilities.getUuid().substring(0, 8).toUpperCase();
-  sh.getRange(slotRow, 3).setValue('booked');
-  sh.getRange(slotRow, 4).setValue(bookingId);
+  // Block all consecutive slots with the same bookingId
+  expectedTimes.forEach(function(t) {
+    const r = rowByTime[t];
+    sh.getRange(r.row, 3).setValue('booked');
+    sh.getRange(r.row, 4).setValue(bookingId);
+  });
 
   const bk = sheet_(SHEET_BOOKINGS);
   bk.appendRow([
@@ -333,13 +364,25 @@ function cancelBooking_(bookingId) {
   if (row === -1) throw new Error('Nem található foglalás');
   bk.getRange(row, 12).setValue('cancelled');
 
+  // Free ALL slots tied to this bookingId (multi-slot bookings span N rows)
   const sh = sheet_(SHEET_SLOTS);
   const sdata = sh.getDataRange().getValues();
+  let freedCount = 0;
   for (let i = 1; i < sdata.length; i++) {
-    if (asDateStr_(sdata[i][0]) === booking.date && asTimeStr_(sdata[i][1]) === booking.time) {
+    if (String(sdata[i][3]) === booking.bookingId) {
       sh.getRange(i + 1, 3).setValue('free');
       sh.getRange(i + 1, 4).setValue('');
-      break;
+      freedCount++;
+    }
+  }
+  // Fallback: if no row carried the bookingId (old single-slot data), free the start slot
+  if (freedCount === 0) {
+    for (let i = 1; i < sdata.length; i++) {
+      if (asDateStr_(sdata[i][0]) === booking.date && asTimeStr_(sdata[i][1]) === booking.time) {
+        sh.getRange(i + 1, 3).setValue('free');
+        sh.getRange(i + 1, 4).setValue('');
+        break;
+      }
     }
   }
 
@@ -683,15 +726,30 @@ function ensureSetup_() {
   // SERVICES sheet — seeded with defaults on first run
   const sv = ss.getSheetByName(SHEET_SERVICES) || ss.insertSheet(SHEET_SERVICES);
   if (sv.getLastRow() === 0) {
-    sv.appendRow(['order', 'key', 'name', 'description', 'duration', 'price', 'featured']);
-    sv.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#f3eced');
+    sv.appendRow(['order', 'key', 'name', 'description', 'duration', 'durationMin', 'price', 'featured']);
+    sv.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground('#f3eced');
     sv.setFrozenRows(1);
     const seedRows = DEFAULT_SERVICES.map(function(s) {
-      return [s.order, s.key, s.name, s.description, s.duration, s.price, s.featured ? 'TRUE' : 'FALSE'];
+      return [s.order, s.key, s.name, s.description, s.duration, s.durationMin, s.price, s.featured ? 'TRUE' : 'FALSE'];
     });
-    sv.getRange(2, 1, seedRows.length, 7).setValues(seedRows);
+    sv.getRange(2, 1, seedRows.length, 8).setValues(seedRows);
+  } else {
+    // Backfill: if sheet exists but lacks the durationMin column (8th), insert it
+    const headers = sv.getRange(1, 1, 1, sv.getLastColumn()).getValues()[0];
+    if (headers.length < 8 || headers[5] !== 'durationMin') {
+      // Insert column F (durationMin) between 'duration' and 'price'
+      sv.insertColumnAfter(5);
+      sv.getRange(1, 6).setValue('durationMin').setFontWeight('bold').setBackground('#f3eced');
+      // Backfill rows with default 60 if blank
+      const lastRow = sv.getLastRow();
+      if (lastRow > 1) {
+        const vals = sv.getRange(2, 6, lastRow - 1, 1).getValues();
+        for (let i = 0; i < vals.length; i++) if (!vals[i][0]) vals[i][0] = 60;
+        sv.getRange(2, 6, lastRow - 1, 1).setValues(vals);
+      }
+    }
   }
-  sv.getRange('A:G').setNumberFormat('@');
+  sv.getRange('A:H').setNumberFormat('@');
 
   // Default sheet ("Sheet1") cleanup
   const def = ss.getSheetByName('Sheet1');
@@ -706,14 +764,19 @@ function getServices_() {
   const out = [];
   for (let i = 1; i < data.length; i++) {
     if (!data[i][1]) continue; // need a key
+    let durationMin = parseInt(data[i][5], 10);
+    if (!durationMin || durationMin <= 0) durationMin = 60;
+    // round up to next SLOT_GRANULARITY_MIN
+    durationMin = Math.ceil(durationMin / SLOT_GRANULARITY_MIN) * SLOT_GRANULARITY_MIN;
     out.push({
       order:       parseInt(data[i][0], 10) || (i),
       key:         String(data[i][1] || '').trim(),
       name:        String(data[i][2] || '').trim(),
       description: String(data[i][3] || '').trim(),
       duration:    String(data[i][4] || '').trim(),
-      price:       String(data[i][5] || '').trim(),
-      featured:    String(data[i][6] || '').toUpperCase() === 'TRUE'
+      durationMin: durationMin,
+      price:       String(data[i][6] || '').trim(),
+      featured:    String(data[i][7] || '').toUpperCase() === 'TRUE'
     });
   }
   out.sort(function(a, b) { return a.order - b.order; });
@@ -723,21 +786,24 @@ function getServices_() {
 function writeServices_(services) {
   const sh = sheet_(SHEET_SERVICES);
   const totalRows = sh.getLastRow();
-  if (totalRows > 1) sh.getRange(2, 1, totalRows - 1, 7).clearContent();
+  if (totalRows > 1) sh.getRange(2, 1, totalRows - 1, 8).clearContent();
   if (!services.length) return { ok: true, count: 0 };
-  // Normalize + give sequential order
   const rows = services.map(function(s, i) {
+    let dm = parseInt(s.durationMin, 10) || 60;
+    if (dm < SLOT_GRANULARITY_MIN) dm = SLOT_GRANULARITY_MIN;
+    dm = Math.ceil(dm / SLOT_GRANULARITY_MIN) * SLOT_GRANULARITY_MIN;
     return [
       i + 1,
       String(s.key || ('svc' + (i + 1))).trim(),
       String(s.name || '').trim(),
       String(s.description || '').trim(),
       String(s.duration || '').trim(),
+      dm,
       String(s.price || '').trim(),
       s.featured ? 'TRUE' : 'FALSE'
     ];
   });
-  sh.getRange(2, 1, rows.length, 7).setValues(rows);
+  sh.getRange(2, 1, rows.length, 8).setValues(rows);
   return { ok: true, count: rows.length };
 }
 
@@ -797,6 +863,19 @@ function addDaysIso_(iso, days) {
   const d = new Date(iso + 'T00:00:00');
   d.setDate(d.getDate() + days);
   return Utilities.formatDate(d, CONFIG.timezone, 'yyyy-MM-dd');
+}
+
+/** Given a start time like '10:00' and count N, return ['10:00','10:30',...] of N times. */
+function consecutiveTimes_(startTime, n) {
+  const parts = String(startTime).split(':');
+  let mins = parseInt(parts[0], 10) * 60 + parseInt(parts[1] || '0', 10);
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const h = Math.floor(mins / 60), m = mins % 60;
+    out.push(('0' + h).slice(-2) + ':' + ('0' + m).slice(-2));
+    mins += SLOT_GRANULARITY_MIN;
+  }
+  return out;
 }
 
 function formatDateHu_(iso) {

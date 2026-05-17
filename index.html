@@ -1112,15 +1112,18 @@
 
     var state = {
       step: 1,
-      service: null, serviceName: null, serviceMeta: null,
+      service: null, serviceName: null, serviceMeta: null, serviceDurationMin: 60,
       date: null, dateLabel: null,
       time: null,
       name: '', phone: '', email: '', note: '',
       viewMonth: new Date(),  // current month
       slotsByDate: {},        // { '2026-05-23': ['09:00','10:00',...] }
+      services: [],           // loaded from backend; durationMin per service
       loadingSlots: false,
       submitting: false
     };
+
+    var SLOT_GRANULARITY_MIN = 30;
 
     // ─── DATA LAYER: remote (Apps Script) or local (localStorage) ───
     var BK = (function() {
@@ -1145,8 +1148,8 @@
         // First-time visitors get a couple of weeks of generated slots so the demo isn't empty
         var out = [];
         var d = new Date(); d.setHours(0,0,0,0);
-        var times = ['09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00'];
-        var satTimes = ['09:00','10:00','11:00','12:00','13:00'];
+        var times = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
+        var satTimes = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30'];
         for (var i = 1; i <= 21; i++) {
           var dt = new Date(d.getTime() + i * 86400000);
           var dow = dt.getDay();
@@ -1154,8 +1157,8 @@
           var iso = isoOf(dt);
           var pool = dow === 6 ? satTimes : times;
           for (var k = 0; k < pool.length; k++) {
-            // randomize a bit so it doesn't look perfectly full
-            if (Math.random() > 0.25) out.push({ date: iso, time: pool[k], status: 'free' });
+            // mostly free with a few random gaps so durations get tested
+            if (Math.random() > 0.15) out.push({ date: iso, time: pool[k], status: 'free' });
           }
         }
         return out;
@@ -1192,17 +1195,30 @@
             .then(function(r) { return r.json(); })
             .then(function(j) { if (!j.ok) throw new Error(j.error); return j; });
           }
-          // local demo
+          // local demo — block N consecutive 30-min slots based on durationMin
           var s = read();
-          var hit = -1;
+          var dm = parseInt(payload.durationMin, 10) || 60;
+          var needed = Math.max(1, Math.ceil(dm / 30));
+          // compute expected times
+          var parts = String(payload.time).split(':');
+          var mins = parseInt(parts[0], 10) * 60 + parseInt(parts[1] || '0', 10);
+          var expected = [];
+          for (var k = 0; k < needed; k++) {
+            var h = Math.floor(mins / 60), m = mins % 60;
+            expected.push(('0' + h).slice(-2) + ':' + ('0' + m).slice(-2));
+            mins += 30;
+          }
+          // verify all free
+          var hitRows = [];
           for (var i = 0; i < s.slots.length; i++) {
-            if (s.slots[i].date === payload.date && s.slots[i].time === payload.time && s.slots[i].status === 'free') {
-              hit = i; break;
+            if (s.slots[i].date === payload.date && expected.indexOf(s.slots[i].time) >= 0) {
+              if (s.slots[i].status !== 'free') return Promise.reject(new Error('Az időpont egy része már foglalt'));
+              hitRows.push(i);
             }
           }
-          if (hit < 0) return Promise.reject(new Error('Ez az időpont már nem szabad'));
+          if (hitRows.length < needed) return Promise.reject(new Error('Hiányzó idősáv ehhez a szolgáltatáshoz'));
           var bookingId = 'BK-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-          s.slots[hit].status = 'booked';
+          hitRows.forEach(function(idx) { s.slots[idx].status = 'booked'; s.slots[idx].bookingId = bookingId; });
           s.bookings.push(Object.assign({ bookingId: bookingId, created: new Date().toISOString() }, payload));
           write(s);
           return Promise.resolve({ ok: true, bookingId: bookingId, demo: true });
@@ -1303,6 +1319,14 @@
           state.service = btn.dataset.svc;
           state.serviceName = btn.querySelector('.bk-svc-name').textContent.trim();
           state.serviceMeta = btn.querySelector('.bk-svc-meta').textContent.trim();
+          state.serviceDurationMin = parseInt(btn.dataset.durationMin || '60', 10);
+          // resolve from cached services if data-attr missing (hardcoded fallback)
+          if (!btn.dataset.durationMin && state.services.length) {
+            var svc = state.services.filter(function(s) { return s.key === state.service; })[0];
+            if (svc && svc.durationMin) state.serviceDurationMin = svc.durationMin;
+          }
+          // clear chosen time — duration changed, the time may no longer fit
+          state.time = null;
           updateMeta(); updateNextState();
         });
       });
@@ -1310,6 +1334,7 @@
 
     function renderServicesEverywhere(services) {
       if (!services || !services.length) { wireServiceCards(); return; }
+      state.services = services;
 
       // 1) Booking modal service grid
       var grid = document.querySelector('.bk-services');
@@ -1317,7 +1342,7 @@
         grid.innerHTML = services.map(function(s, i) {
           var num = ('0' + (i + 1)).slice(-2);
           var meta = (s.duration || '') + (s.duration && s.price ? ' · ' : '') + (s.price || '');
-          return '<button class="bk-svc' + (s.featured ? ' bk-svc--feat' : '') + '" data-svc="' + escAttr(s.key) + '">' +
+          return '<button class="bk-svc' + (s.featured ? ' bk-svc--feat' : '') + '" data-svc="' + escAttr(s.key) + '" data-duration-min="' + (s.durationMin || 60) + '">' +
             (s.featured ? '<span class="bk-svc-tag">✿ Legkeresettebb</span>' : '') +
             '<span class="bk-svc-num">' + num + '</span>' +
             '<span class="bk-svc-name">' + escHtml(s.name) + '</span>' +
@@ -1415,15 +1440,34 @@
     });
 
     // ─── TIME slots ───
+    // For a service with durationMin = D, a slot is a valid START time only if
+    // it AND the next (D/30 - 1) slots are all free and contiguous.
     function renderTimes() {
       timesEl.innerHTML = '';
-      var slots = (state.slotsByDate[state.date] || []).slice();
-      if (!slots.length) {
-        timesEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#8e7680;font-family:Instrument Serif,serif;font-style:italic;">Erre a napra nincs szabad időpont.</div>';
+      var available = (state.slotsByDate[state.date] || []).slice().sort();
+      var dm = state.serviceDurationMin || 60;
+      var slotsNeeded = Math.max(1, Math.ceil(dm / SLOT_GRANULARITY_MIN));
+
+      // Build a set for fast lookup
+      var avail = {};
+      available.forEach(function(t) { avail[t] = true; });
+
+      // Filter: keep only starts where slotsNeeded consecutive slots exist
+      var validStarts = available.filter(function(start) {
+        var required = consecutiveTimes(start, slotsNeeded);
+        for (var k = 0; k < required.length; k++) if (!avail[required[k]]) return false;
+        return true;
+      });
+
+      if (!validStarts.length) {
+        var why = available.length
+          ? 'Erre a napra nincs <b>' + dm + ' perces</b> szabad sáv. Válassz másik napot vagy rövidebb szolgáltatást.'
+          : 'Erre a napra nincs szabad időpont.';
+        timesEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#8e7680;font-family:Instrument Serif,serif;font-style:italic;">' + why + '</div>';
         timeSub.textContent = state.dateLabel + ' — nincs elérhető idősáv.';
         return;
       }
-      slots.forEach(function(s) {
+      validStarts.forEach(function(s) {
         var b = document.createElement('button');
         b.type = 'button'; b.className = 'bk-time'; b.textContent = s;
         if (state.time === s) b.classList.add('is-selected');
@@ -1432,7 +1476,19 @@
         });
         timesEl.appendChild(b);
       });
-      timeSub.textContent = state.dateLabel + ' — válassz egy szabad idősávot.';
+      timeSub.innerHTML = state.dateLabel + ' — <b>' + dm + ' perces</b> szolgáltatás, válassz egy szabad kezdést.';
+    }
+
+    function consecutiveTimes(start, n) {
+      var parts = String(start).split(':');
+      var mins = parseInt(parts[0], 10) * 60 + parseInt(parts[1] || '0', 10);
+      var out = [];
+      for (var i = 0; i < n; i++) {
+        var h = Math.floor(mins / 60), m = mins % 60;
+        out.push(('0' + h).slice(-2) + ':' + ('0' + m).slice(-2));
+        mins += SLOT_GRANULARITY_MIN;
+      }
+      return out;
     }
 
     // ─── FORM live validation ───
@@ -1459,12 +1515,17 @@
     function submitBooking() {
       state.submitting = true; updateMeta(); updateNextState();
       nextBtn.textContent = 'Foglalás...';
+      var dm = state.serviceDurationMin || 60;
+      var slotsNeeded = Math.max(1, Math.ceil(dm / SLOT_GRANULARITY_MIN));
+      var blockedTimes = consecutiveTimes(state.time, slotsNeeded);
+
       BK.book({
         date: state.date,
         time: state.time,
         service: state.service,
         serviceName: state.serviceName,
         serviceMeta: state.serviceMeta,
+        durationMin: dm,
         name: state.name,
         phone: state.phone,
         email: state.email,
@@ -1476,9 +1537,9 @@
         state.emailWarning = res.emailWarning || null;
         renderSummary();
         setStep(5);
-        // mark slot taken locally so calendar reflects it
+        // remove ALL the consecutive slots this booking consumed (so calendar reflects it)
         if (state.slotsByDate[state.date]) {
-          state.slotsByDate[state.date] = state.slotsByDate[state.date].filter(function(t) { return t !== state.time; });
+          state.slotsByDate[state.date] = state.slotsByDate[state.date].filter(function(t) { return blockedTimes.indexOf(t) === -1; });
         }
         refreshNextSlots();
       }).catch(function(err) {
