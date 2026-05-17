@@ -56,10 +56,9 @@ function doGet(e) {
   const action = (p.action || '').toLowerCase();
 
   if (action === 'slots') {
-    return jsonOk_({
-      slots: getPublicSlots_(p.from, p.to),
-      business: { name: CONFIG.businessName }
-    });
+    return jsonOk_(withCache_('public_slots', 60, function() {
+      return { slots: getPublicSlots_(p.from, p.to), business: { name: CONFIG.businessName } };
+    }));
   }
 
   if (action === 'next') {
@@ -67,7 +66,9 @@ function doGet(e) {
   }
 
   if (action === 'services') {
-    return jsonOk_({ services: getServices_() });
+    return jsonOk_(withCache_('public_services', 300, function() {
+      return { services: getServices_() };
+    }));
   }
 
   return jsonOk_({ ok: true, service: 'alice-booking', version: '1.0' });
@@ -112,7 +113,9 @@ function adminGetState() {
 function adminSaveServices(password, services) {
   if (!adminAuth(password)) throw new Error('Hibás jelszó');
   if (!Array.isArray(services)) throw new Error('Services must be an array');
-  return writeServices_(services);
+  var r = writeServices_(services);
+  bustPublicCache_();
+  return r;
 }
 
 function adminAddSlot(password, dateIso, time) {
@@ -147,6 +150,7 @@ function adminAddDayPreset(password, dateIso, preset) {
   if (rows.length) {
     const startRow = sh.getLastRow() + 1;
     sh.getRange(startRow, 1, rows.length, 4).setValues(rows);
+    bustPublicCache_();
   }
   return { added: rows.length };
 }
@@ -205,6 +209,7 @@ function adminBulkFill(password, days) {
   if (rowsToAdd.length) {
     const startRow = sh.getLastRow() + 1;
     sh.getRange(startRow, 1, rowsToAdd.length, 4).setValues(rowsToAdd);
+    bustPublicCache_();
   }
   return { added: rowsToAdd.length, skipped: skipped, days: days };
 }
@@ -227,6 +232,7 @@ function adminToggleSlot(password, dateIso, time) {
       const newStatus = status === 'free' ? 'booked' : 'free';
       sh.getRange(i + 1, 3).setValue(newStatus);
       sh.getRange(i + 1, 4).setValue(newStatus === 'free' ? '' : 'manual');
+      bustPublicCache_();
       return { ok: true, status: newStatus };
     }
   }
@@ -259,6 +265,7 @@ function batchDelete_(sh, pred) {
     if (pred(data[i])) toDeleteRows.push(i + 1);
   }
   batchDeleteRows_(sh, toDeleteRows);
+  if (toDeleteRows.length) bustPublicCache_();
   return { removed: toDeleteRows.length };
 }
 
@@ -328,6 +335,8 @@ function createBooking_(b) {
     'confirmed'
   ]);
 
+  bustPublicCache_();
+
   let emailWarning = null;
   try {
     sendEmails_(b, bookingId);
@@ -375,6 +384,7 @@ function cancelBooking_(bookingId) {
       freedCount++;
     }
   }
+  bustPublicCache_();
   // Fallback: if no row carried the bookingId (old single-slot data), free the start slot
   if (freedCount === 0) {
     for (let i = 1; i < sdata.length; i++) {
@@ -460,6 +470,7 @@ function addSlot_(dateIso, time) {
     }
   }
   sh.appendRow([dateIso, time, 'free', '']);
+  bustPublicCache_();
   return { ok: true };
 }
 
@@ -472,6 +483,7 @@ function removeSlot_(dateIso, time) {
         throw new Error('Foglalt időpontot először mondj le');
       }
       sh.deleteRow(i + 1);
+      bustPublicCache_();
       return { ok: true };
     }
   }
@@ -844,6 +856,30 @@ function getSheetUrl_() {
 function adminGetSheetUrl(password) {
   if (!adminAuth(password)) throw new Error('Hibás jelszó');
   return getSheetUrl_();
+}
+
+/**
+ * Wrap an expensive read with CacheService — saves a Sheets roundtrip
+ * (~300–700ms) on every public read. Cache is shared across all visitors.
+ * Invalidate via bustPublicCache_() whenever slots/services/bookings change.
+ */
+function withCache_(key, ttlSeconds, compute) {
+  try {
+    var c = CacheService.getScriptCache();
+    var hit = c.get(key);
+    if (hit) return JSON.parse(hit);
+    var fresh = compute();
+    try { c.put(key, JSON.stringify(fresh), ttlSeconds); } catch (e) {}
+    return fresh;
+  } catch (e) {
+    return compute();
+  }
+}
+function bustPublicCache_() {
+  try {
+    var c = CacheService.getScriptCache();
+    c.removeAll(['public_slots', 'public_services']);
+  } catch (e) {}
 }
 
 function jsonOk_(payload) {
