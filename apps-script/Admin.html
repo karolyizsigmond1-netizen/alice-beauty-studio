@@ -1235,11 +1235,17 @@
     });
     bookingsList.querySelectorAll('.booking-cancel').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        if (!confirm('Biztosan lemondod ezt a foglalást?\n\n(A vendég NEM kap automatikus értesítést — hívd fel.)')) return;
-        run('adminCancelBooking', pw, btn.dataset.id).then(function() {
-          toast('Foglalás lemondva, idősáv felszabadítva.', 'ok');
+        if (!confirm('Biztosan lemondod ezt a foglalást?\n\nA vendég AUTOMATIKUSAN kap egy értesítő e-mailt a lemondásról.')) return;
+        btn.disabled = true; btn.textContent = 'Lemondás...';
+        run('adminCancelBooking', pw, btn.dataset.id).then(function(r) {
+          var msg = '✿ Foglalás lemondva, idősáv felszabadítva, e-mail küldve.';
+          if (r && r.emailWarning) msg = '⚠ Lemondás kész, de e-mail nem ment: ' + r.emailWarning;
+          toast(msg, r && r.emailWarning ? 'err' : 'ok');
           loadAll();
-        }).catch(function(e) { toast(e.message || 'Hiba', 'err'); });
+        }).catch(function(e) {
+          btn.disabled = false; btn.textContent = 'Lemondás';
+          toast(e.message || 'Hiba', 'err');
+        });
       });
     });
   }

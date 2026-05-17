@@ -310,12 +310,23 @@ function createBooking_(b) {
 function cancelBooking_(bookingId) {
   const bk = sheet_(SHEET_BOOKINGS);
   const bdata = bk.getDataRange().getValues();
-  let date = null, time = null, row = -1;
+  let row = -1;
+  let booking = null;
   for (let i = 1; i < bdata.length; i++) {
     if (String(bdata[i][0]) === bookingId) {
       row = i + 1;
-      date = asDateStr_(bdata[i][2]);
-      time = asTimeStr_(bdata[i][3]);
+      booking = {
+        bookingId:   String(bdata[i][0]),
+        date:        asDateStr_(bdata[i][2]),
+        time:        asTimeStr_(bdata[i][3]),
+        service:     String(bdata[i][4] || ''),
+        serviceName: String(bdata[i][5] || ''),
+        serviceMeta: String(bdata[i][6] || ''),
+        name:        String(bdata[i][7] || ''),
+        phone:       String(bdata[i][8] || ''),
+        email:       String(bdata[i][9] || ''),
+        note:        String(bdata[i][10] || '')
+      };
       break;
     }
   }
@@ -325,13 +336,73 @@ function cancelBooking_(bookingId) {
   const sh = sheet_(SHEET_SLOTS);
   const sdata = sh.getDataRange().getValues();
   for (let i = 1; i < sdata.length; i++) {
-    if (asDateStr_(sdata[i][0]) === date && asTimeStr_(sdata[i][1]) === time) {
+    if (asDateStr_(sdata[i][0]) === booking.date && asTimeStr_(sdata[i][1]) === booking.time) {
       sh.getRange(i + 1, 3).setValue('free');
       sh.getRange(i + 1, 4).setValue('');
       break;
     }
   }
-  return { ok: true };
+
+  let emailWarning = null;
+  try {
+    sendCancellationEmails_(booking);
+  } catch (e) {
+    emailWarning = e.message || String(e);
+    Logger.log('Cancellation email failed: ' + emailWarning);
+  }
+  return { ok: true, emailWarning: emailWarning };
+}
+
+function sendCancellationEmails_(b) {
+  const dateLabel = formatDateHu_(b.date) + ' · ' + b.time;
+  const subjectClient = CONFIG.businessName + ' — Foglalás lemondva';
+  const subjectOwner  = '✕ Foglalás lemondva · ' + b.serviceName + ' · ' + b.date + ' ' + b.time;
+
+  const clientHtml =
+    '<div style="font-family:Georgia,serif;color:#2a1822;max-width:520px;margin:0 auto;padding:32px;background:#faf5f6;">' +
+    '<div style="text-align:center;font-size:14px;letter-spacing:0.3em;color:#a4615c;text-transform:uppercase;margin-bottom:24px;">✿ ' + CONFIG.businessName + ' ✿</div>' +
+    '<h1 style="font-family:\'DM Serif Display\',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 16px;color:#2a1822;">Kedves <em style="color:#a4615c;">' + escapeHtml_(b.name) + '</em>,</h1>' +
+    '<p style="font-size:16px;line-height:1.65;color:#4a2e3d;margin:0 0 18px;">Sajnálattal értesítlek, hogy a következő időpontodat sajnos le kellett mondanom:</p>' +
+    '<table style="width:100%;background:#fff;border-radius:8px;padding:20px;border-collapse:collapse;margin-bottom:24px;">' +
+    '<tr><td style="padding:8px 0;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#8e7680;">Szolgáltatás</td><td style="padding:8px 0;text-align:right;font-family:Georgia,serif;font-size:16px;color:#2a1822;">' + escapeHtml_(b.serviceName || '') + '</td></tr>' +
+    '<tr><td style="padding:8px 0;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#8e7680;border-top:1px solid #f3eced;">Lemondott időpont</td><td style="padding:8px 0;text-align:right;font-family:Georgia,serif;font-size:16px;color:#2a1822;text-decoration:line-through;border-top:1px solid #f3eced;">' + dateLabel + '</td></tr>' +
+    '<tr><td style="padding:8px 0;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#8e7680;border-top:1px solid #f3eced;">Foglalási szám</td><td style="padding:8px 0;text-align:right;font-family:Georgia,serif;font-size:16px;color:#2a1822;border-top:1px solid #f3eced;">' + escapeHtml_(b.bookingId) + '</td></tr>' +
+    '</table>' +
+    '<p style="font-size:15px;line-height:1.7;color:#4a2e3d;margin:0 0 8px;">Ha szeretnél új időpontot, kérlek hívj a <a style="color:#a4615c;font-weight:600;text-decoration:none;" href="tel:' + CONFIG.businessPhone + '">' + CONFIG.businessPhone + '</a> számon, vagy írj az <a style="color:#a4615c;font-weight:600;text-decoration:none;" href="mailto:' + CONFIG.businessEmail + '">' + CONFIG.businessEmail + '</a> címre.</p>' +
+    '<p style="font-size:14px;line-height:1.7;color:#8e7680;margin:18px 0 0;font-style:italic;">Elnézést a kellemetlenségért — találjunk egy új időpontot, ami mindkettőnknek megfelel.</p>' +
+    '<p style="font-size:13px;line-height:1.6;color:#8e7680;margin:24px 0 0;font-style:italic;">— Alice</p>' +
+    '</div>';
+
+  const ownerHtml =
+    '<div style="font-family:Georgia,serif;color:#2a1822;max-width:520px;margin:0 auto;padding:24px;">' +
+    '<h2 style="margin:0 0 16px;color:#b6463f;">✕ Foglalás lemondva</h2>' +
+    '<p style="color:#8e7680;font-style:italic;margin-bottom:16px;">Visszaigazoló e-mail elküldve a vendégnek. Az idősáv újra szabad a foglalóban.</p>' +
+    '<table style="width:100%;border-collapse:collapse;">' +
+    '<tr><td style="padding:6px 0;color:#8e7680;">Vendég</td><td style="padding:6px 0;text-align:right;"><b>' + escapeHtml_(b.name) + '</b></td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8e7680;">Telefon</td><td style="padding:6px 0;text-align:right;">' + escapeHtml_(b.phone || '—') + '</td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8e7680;">E-mail</td><td style="padding:6px 0;text-align:right;">' + escapeHtml_(b.email) + '</td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8e7680;">Szolgáltatás</td><td style="padding:6px 0;text-align:right;">' + escapeHtml_(b.serviceName || '') + '</td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8e7680;">Lemondott időpont</td><td style="padding:6px 0;text-align:right;text-decoration:line-through;"><b>' + dateLabel + '</b></td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8e7680;">Foglalási szám</td><td style="padding:6px 0;text-align:right;">' + escapeHtml_(b.bookingId) + '</td></tr>' +
+    '</table>' +
+    '</div>';
+
+  if (b.email) {
+    MailApp.sendEmail({
+      to: b.email,
+      subject: subjectClient,
+      htmlBody: clientHtml,
+      name: CONFIG.businessName,
+      replyTo: CONFIG.businessEmail
+    });
+  }
+  MailApp.sendEmail({
+    to: CONFIG.businessEmail,
+    subject: subjectOwner,
+    htmlBody: ownerHtml,
+    name: CONFIG.businessName + ' (auto)',
+    replyTo: b.email || CONFIG.businessEmail
+  });
 }
 
 // ============== SLOT MANAGEMENT ==============
