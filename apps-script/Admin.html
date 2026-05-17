@@ -359,6 +359,75 @@
   .all-time.x:hover { background: rgba(164,97,92,0.25); }
   .all-time.m { background: rgba(192,133,43,0.15); color: var(--warn); border-color: transparent; }
   .all-time .badge { font-size: 9px; opacity: 0.7; }
+
+  /* SERVICES editor */
+  .svc-list { display: flex; flex-direction: column; gap: 12px; }
+  .svc-row {
+    background: var(--paper); border: 1px solid var(--line-faint); border-radius: 12px;
+    padding: 18px 20px;
+    display: grid;
+    grid-template-columns: 28px 1.6fr 1fr 1fr auto auto;
+    gap: 12px; align-items: center;
+  }
+  .svc-row.is-featured { border-color: rgba(196,132,127,0.5); background: linear-gradient(to right, rgba(196,132,127,0.06), var(--paper) 30%); }
+  .svc-row.is-new { border-color: rgba(111,168,107,0.4); background: rgba(111,168,107,0.05); }
+  .svc-order {
+    font-family: 'Instrument Serif', serif; font-style: italic;
+    color: var(--mute); font-size: 16px; text-align: center;
+  }
+  .svc-field { display: flex; flex-direction: column; gap: 4px; }
+  .svc-field label {
+    font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--mute); font-weight: 500;
+  }
+  .svc-field input, .svc-field textarea {
+    background: var(--blush); border: 1px solid transparent; border-radius: 6px;
+    padding: 8px 10px; font-family: inherit; font-size: 13px; color: var(--plum);
+    outline: none; transition: border-color 0.2s, background 0.2s;
+    font-weight: 500;
+  }
+  .svc-field textarea { resize: vertical; min-height: 38px; font-weight: 400; }
+  .svc-field input:focus, .svc-field textarea:focus { border-color: var(--rose-deep); background: #fff; }
+  .svc-toggle {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; letter-spacing: 0.06em; cursor: pointer;
+    padding: 6px 10px; border-radius: 100px;
+    background: var(--blush); color: var(--mute);
+    border: 1px solid transparent; user-select: none;
+    transition: all 0.25s; white-space: nowrap;
+  }
+  .svc-toggle:hover { background: var(--blush-deep); }
+  .svc-toggle.is-on { background: var(--rose-deep); color: var(--paper); }
+  .svc-toggle input { display: none; }
+  .svc-mini {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--paper);
+    cursor: pointer; display: grid; place-items: center;
+    color: var(--mute); transition: all 0.25s; padding: 0;
+  }
+  .svc-mini:hover:not(:disabled) { color: var(--bad); border-color: var(--bad); }
+  .svc-mini:disabled { opacity: 0.3; cursor: not-allowed; }
+  .svc-mini svg { width: 14px; height: 14px; }
+
+  .svc-meta-row {
+    grid-column: 2 / -1;
+    display: grid; grid-template-columns: 1fr; gap: 8px;
+    padding-top: 4px;
+  }
+  @media (max-width: 880px) {
+    .svc-row { grid-template-columns: 28px 1fr; gap: 10px 12px; }
+    .svc-field { grid-column: 1 / -1; padding-left: 36px; }
+    .svc-field.svc-field--name { grid-column: 2; padding-left: 0; }
+    .svc-mini, .svc-toggle { grid-column: 2; justify-self: start; padding-left: 0; }
+    .svc-meta-row { display: none; }
+  }
+
+  .svc-footer {
+    margin-top: 24px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+  }
+  .svc-save-row { display: flex; align-items: center; gap: 12px; }
+  .svc-dirty { font-size: 12px; color: var(--warn); font-style: italic; font-family: 'Instrument Serif', serif; }
 </style>
 </head>
 <body>
@@ -385,6 +454,7 @@
     <div class="tabs">
       <button class="tab is-on" data-tab="cal">📅 Időpontok</button>
       <button class="tab" data-tab="bookings">📋 Foglalások <span id="bkCount"></span></button>
+      <button class="tab" data-tab="services">✿ Szolgáltatások</button>
     </div>
     <div class="ctas">
       <button class="icon-btn" id="refreshBtn" title="Frissítés">
@@ -488,6 +558,28 @@
       </div>
     </div>
 
+    <!-- SERVICES PANEL -->
+    <div class="panel" data-panel="services">
+      <div class="section-head">
+        <h2>Szolgáltatások &amp; árak</h2>
+        <span class="stat" id="svcStat">Itt szerkesztheted, hogyan jelennek meg a szolgáltatások a weboldalon és a foglalóban.</span>
+      </div>
+
+      <div class="svc-list" id="svcList"></div>
+
+      <div class="svc-footer">
+        <button class="btn btn--ghost" id="svcAddBtn">+ Új szolgáltatás</button>
+        <div class="svc-save-row">
+          <span class="svc-dirty" id="svcDirty"></span>
+          <button class="btn" id="svcSaveBtn" disabled>Mentés</button>
+        </div>
+      </div>
+
+      <p style="margin-top:24px;color:#8e7680;font-size:13px;font-style:italic;font-family:'Instrument Serif',serif;">
+        A "Legkeresettebb" jelölésű szolgáltatás külön kiemelt módon jelenik meg a weboldalon — egyszerre csak egyet érdemes így megjelölni.
+      </p>
+    </div>
+
     <!-- BOOKINGS PANEL -->
     <div class="panel" data-panel="bookings">
       <div class="section-head">
@@ -511,7 +603,9 @@
     viewMonth: new Date(),
     selectedDate: null,
     slots: [],
-    bookings: []
+    bookings: [],
+    services: [],
+    servicesDirty: false
   };
 
   var MONTHS_HU = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
@@ -532,6 +626,7 @@
   var toastEl = $('toast');
   var autoFillBtn = $('autoFillBtn'), wipeBtn = $('wipeBtn');
   var allList = $('allList'), allCount = $('allCount'), allSearch = $('allSearch');
+  var svcList = $('svcList'), svcAddBtn = $('svcAddBtn'), svcSaveBtn = $('svcSaveBtn'), svcDirty = $('svcDirty');
 
   // ── HELPERS ──
   function toast(msg, kind) {
@@ -631,10 +726,14 @@
       if (!s) throw new Error('Üres válasz a szervertől — futtasd újra a setup-ot, vagy redeploy.');
       state.slots = (s && s.slots) || [];
       state.bookings = (s && s.bookings) || [];
+      state.services = (s && s.services) || [];
+      state.servicesDirty = false;
       renderCalendar();
       renderBookings();
       renderAllList();
+      renderServices();
       updateBanner();
+      updateServiceDirty();
       if (state.selectedDate) renderDayPane();
     }).catch(function(e) {
       var msg = 'Betöltési hiba: ' + (e.message || e);
@@ -706,6 +805,138 @@
   }
 
   allSearch.addEventListener('input', function() { renderAllList(); });
+
+  // ── SERVICES editor ──
+  function renderServices() {
+    svcList.innerHTML = '';
+    if (!state.services.length) {
+      svcList.innerHTML = '<div class="empty-state">Nincs még szolgáltatás. Adj hozzá egyet az alábbi gombbal.</div>';
+      return;
+    }
+    state.services.forEach(function(s, idx) {
+      var row = document.createElement('div');
+      row.className = 'svc-row' + (s.featured ? ' is-featured' : '');
+      row.dataset.idx = idx;
+      row.innerHTML =
+        '<div class="svc-order">' + (idx + 1) + '</div>' +
+        '<div class="svc-field svc-field--name">' +
+          '<label>Név</label>' +
+          '<input type="text" data-field="name" value="' + escAttr(s.name) + '" placeholder="Pl. Hajfestés & balayage"/>' +
+        '</div>' +
+        '<div class="svc-field">' +
+          '<label>Időtartam</label>' +
+          '<input type="text" data-field="duration" value="' + escAttr(s.duration) + '" placeholder="60–90 min"/>' +
+        '</div>' +
+        '<div class="svc-field">' +
+          '<label>Ár</label>' +
+          '<input type="text" data-field="price" value="' + escAttr(s.price) + '" placeholder="22 000 Ft-tól"/>' +
+        '</div>' +
+        '<label class="svc-toggle' + (s.featured ? ' is-on' : '') + '" data-toggle="featured">' +
+          '<input type="checkbox"' + (s.featured ? ' checked' : '') + '/>' +
+          '<span>★ Kiemelt</span>' +
+        '</label>' +
+        '<button class="svc-mini" data-action="delete" title="Törlés">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>' +
+        '</button>' +
+        '<div class="svc-meta-row">' +
+          '<div class="svc-field">' +
+            '<label>Leírás</label>' +
+            '<textarea data-field="description" rows="2" placeholder="Rövid leírás...">' + escHtml(s.description) + '</textarea>' +
+          '</div>' +
+        '</div>';
+
+      // Input handlers
+      row.querySelectorAll('input[data-field], textarea[data-field]').forEach(function(inp) {
+        inp.addEventListener('input', function() {
+          state.services[idx][inp.dataset.field] = inp.value;
+          markServicesDirty();
+        });
+      });
+      // Featured toggle
+      var tog = row.querySelector('[data-toggle="featured"]');
+      tog.addEventListener('click', function(e) {
+        e.preventDefault();
+        var cb = tog.querySelector('input');
+        cb.checked = !cb.checked;
+        // Only one featured at a time
+        if (cb.checked) {
+          state.services.forEach(function(x, i) { x.featured = (i === idx); });
+        } else {
+          state.services[idx].featured = false;
+        }
+        markServicesDirty();
+        renderServices();
+      });
+      // Delete
+      row.querySelector('[data-action="delete"]').addEventListener('click', function() {
+        if (!confirm('Biztosan törlöd a "' + (s.name || 'névtelen szolgáltatás') + '"-t?')) return;
+        state.services.splice(idx, 1);
+        markServicesDirty();
+        renderServices();
+      });
+      svcList.appendChild(row);
+    });
+  }
+
+  function markServicesDirty() {
+    state.servicesDirty = true;
+    updateServiceDirty();
+  }
+  function updateServiceDirty() {
+    svcSaveBtn.disabled = !state.servicesDirty;
+    svcDirty.textContent = state.servicesDirty ? '✦ Van mentetlen módosítás' : '';
+  }
+
+  svcAddBtn.addEventListener('click', function() {
+    state.services.push({
+      order: state.services.length + 1,
+      key: 'svc' + Date.now(),
+      name: '',
+      description: '',
+      duration: '',
+      price: '',
+      featured: false
+    });
+    markServicesDirty();
+    renderServices();
+    // focus the new row's name input
+    setTimeout(function() {
+      var rows = svcList.querySelectorAll('.svc-row');
+      var last = rows[rows.length - 1];
+      if (last) last.querySelector('input[data-field="name"]').focus();
+    }, 50);
+  });
+
+  svcSaveBtn.addEventListener('click', function() {
+    // Strip empty rows
+    var clean = state.services.filter(function(s) { return (s.name || '').trim(); });
+    if (!clean.length) { toast('Adj meg legalább egy szolgáltatást.', 'err'); return; }
+    svcSaveBtn.disabled = true;
+    svcSaveBtn.textContent = 'Mentés...';
+    run('adminSaveServices', pw, clean).then(function() {
+      state.services = clean;
+      state.servicesDirty = false;
+      svcSaveBtn.textContent = 'Mentés';
+      updateServiceDirty();
+      renderServices();
+      toast('Szolgáltatások mentve. A weboldal pár másodperc múlva frissül.', 'ok');
+    }).catch(function(e) {
+      svcSaveBtn.textContent = 'Mentés';
+      svcSaveBtn.disabled = false;
+      toast(e.message || 'Hiba', 'err');
+    });
+  });
+
+  function escHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>]/g, function(c) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c];
+    });
+  }
+  function escAttr(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
   $('refreshBtn').addEventListener('click', loadAll);
 
   $('sheetBtn').addEventListener('click', function() {

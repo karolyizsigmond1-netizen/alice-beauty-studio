@@ -22,6 +22,16 @@ const CONFIG = {
 const SHEET_SLOTS    = 'Slots';
 const SHEET_BOOKINGS = 'Bookings';
 const SHEET_SETTINGS = 'Settings';
+const SHEET_SERVICES = 'Services';
+
+const DEFAULT_SERVICES = [
+  { order: 1, key: 'hajfestes',   name: 'Hajfestés & balayage',     description: 'Bőrtónushoz illesztett, természetes átmenetek és divatos színek prémium festékekkel.', duration: '90–180 min', price: '26 000 Ft-tól', featured: false },
+  { order: 2, key: 'alkalmi',     name: 'Alkalmi konty & smink',    description: 'Esküvő, ballagás, fotózás. Teljes look egy kézből — próbafestéssel és kipróbálással.', duration: '60–120 min', price: '22 000 Ft-tól', featured: true },
+  { order: 3, key: 'keratin',     name: 'Keratinos kezelés',        description: 'Selymes, fényes, könnyen kezelhető haj — hetekre szóló simaság, töredezés nélkül.',   duration: '120 min',    price: '32 000 Ft-tól', featured: false },
+  { order: 4, key: 'vagas',       name: 'Hajvágás & formázás',      description: 'Arcformához igazított vonalvezetés. Ollóval — nem gépezettel.',                       duration: '45–60 min',  price: '9 000 Ft-tól',  featured: false },
+  { order: 5, key: 'konty',       name: 'Klasszikus konty',         description: 'Esküvőhöz, alkalomhoz, hosszú estéhez. Tartós, kényelmes, fotózásálló.',              duration: '75 min',     price: '18 000 Ft-tól', featured: false },
+  { order: 6, key: 'konzultacio', name: 'Konzultáció',              description: '30 perces beszélgetés — szín, forma, alkalom. Mielőtt bármit elköteleznél.',         duration: '30 min',     price: 'díjmentes',     featured: false }
+];
 
 const PROP_SHEET_ID = 'BOOKING_SHEET_ID';
 
@@ -50,6 +60,10 @@ function doGet(e) {
 
   if (action === 'next') {
     return jsonOk_({ slots: getNextSlots_(parseInt(p.n || '5', 10)) });
+  }
+
+  if (action === 'services') {
+    return jsonOk_({ services: getServices_() });
   }
 
   return jsonOk_({ ok: true, service: 'alice-booking', version: '1.0' });
@@ -84,8 +98,17 @@ function adminGetState() {
       phone: CONFIG.businessPhone
     },
     slots: getAllSlots_(),
-    bookings: getAllBookings_()
+    bookings: getAllBookings_(),
+    services: getServices_()
   };
+}
+
+// ============== SERVICES ADMIN ==============
+
+function adminSaveServices(password, services) {
+  if (!adminAuth(password)) throw new Error('Hibás jelszó');
+  if (!Array.isArray(services)) throw new Error('Services must be an array');
+  return writeServices_(services);
 }
 
 function adminAddSlot(password, dateIso, time) {
@@ -586,10 +609,65 @@ function ensureSetup_() {
   }
   bk.getRange('A:L').setNumberFormat('@');
 
+  // SERVICES sheet — seeded with defaults on first run
+  const sv = ss.getSheetByName(SHEET_SERVICES) || ss.insertSheet(SHEET_SERVICES);
+  if (sv.getLastRow() === 0) {
+    sv.appendRow(['order', 'key', 'name', 'description', 'duration', 'price', 'featured']);
+    sv.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#f3eced');
+    sv.setFrozenRows(1);
+    const seedRows = DEFAULT_SERVICES.map(function(s) {
+      return [s.order, s.key, s.name, s.description, s.duration, s.price, s.featured ? 'TRUE' : 'FALSE'];
+    });
+    sv.getRange(2, 1, seedRows.length, 7).setValues(seedRows);
+  }
+  sv.getRange('A:G').setNumberFormat('@');
+
   // Default sheet ("Sheet1") cleanup
   const def = ss.getSheetByName('Sheet1');
   if (def && ss.getSheets().length > 1) ss.deleteSheet(def);
   return ss;
+}
+
+function getServices_() {
+  ensureSetup_();
+  const sh = sheet_(SHEET_SERVICES);
+  const data = sh.getDataRange().getValues();
+  const out = [];
+  for (let i = 1; i < data.length; i++) {
+    if (!data[i][1]) continue; // need a key
+    out.push({
+      order:       parseInt(data[i][0], 10) || (i),
+      key:         String(data[i][1] || '').trim(),
+      name:        String(data[i][2] || '').trim(),
+      description: String(data[i][3] || '').trim(),
+      duration:    String(data[i][4] || '').trim(),
+      price:       String(data[i][5] || '').trim(),
+      featured:    String(data[i][6] || '').toUpperCase() === 'TRUE'
+    });
+  }
+  out.sort(function(a, b) { return a.order - b.order; });
+  return out;
+}
+
+function writeServices_(services) {
+  const sh = sheet_(SHEET_SERVICES);
+  const totalRows = sh.getLastRow();
+  if (totalRows > 1) sh.getRange(2, 1, totalRows - 1, 7).clearContent();
+  if (!services.length) return { ok: true, count: 0 };
+  // Normalize + give sequential order
+  const rows = services.map(function(s, i) {
+    return [
+      i + 1,
+      String(s.key || ('svc' + (i + 1))).trim(),
+      String(s.name || '').trim(),
+      String(s.description || '').trim(),
+      String(s.duration || '').trim(),
+      String(s.price || '').trim(),
+      s.featured ? 'TRUE' : 'FALSE'
+    ];
+  });
+  sh.getRange(2, 1, rows.length, 7).setValues(rows);
+  return { ok: true, count: rows.length };
 }
 
 /**

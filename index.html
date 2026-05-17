@@ -1132,6 +1132,15 @@
         catch (e) { return { slots: seedSlots(), bookings: [] }; }
       }
       function write(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+
+      function loadServices() {
+        if (url) {
+          return fetch(url + '?action=services', { method: 'GET' })
+            .then(function(r) { return r.json(); })
+            .then(function(j) { if (!j.ok) throw new Error(j.error); return j.services || []; });
+        }
+        return Promise.resolve([]);
+      }
       function seedSlots() {
         // First-time visitors get a couple of weeks of generated slots so the demo isn't empty
         var out = [];
@@ -1158,6 +1167,7 @@
       return {
         isRemote: !!url,
         url: url,
+        loadServices: loadServices,
 
         // returns Promise<Array<{date, time}>> for free slots
         loadSlots: function() {
@@ -1284,16 +1294,77 @@
     }
 
     // ─── SERVICE picker ───
-    document.querySelectorAll('.bk-svc').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.bk-svc').forEach(function(b) { b.classList.remove('is-selected'); });
-        btn.classList.add('is-selected');
-        state.service = btn.dataset.svc;
-        state.serviceName = btn.querySelector('.bk-svc-name').textContent.trim();
-        state.serviceMeta = btn.querySelector('.bk-svc-meta').textContent.trim();
-        updateMeta(); updateNextState();
+    function wireServiceCards() {
+      document.querySelectorAll('.bk-svc').forEach(function(btn) {
+        if (btn._svcBound) return; btn._svcBound = true;
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.bk-svc').forEach(function(b) { b.classList.remove('is-selected'); });
+          btn.classList.add('is-selected');
+          state.service = btn.dataset.svc;
+          state.serviceName = btn.querySelector('.bk-svc-name').textContent.trim();
+          state.serviceMeta = btn.querySelector('.bk-svc-meta').textContent.trim();
+          updateMeta(); updateNextState();
+        });
       });
-    });
+    }
+
+    function renderServicesEverywhere(services) {
+      if (!services || !services.length) { wireServiceCards(); return; }
+
+      // 1) Booking modal service grid
+      var grid = document.querySelector('.bk-services');
+      if (grid) {
+        grid.innerHTML = services.map(function(s, i) {
+          var num = ('0' + (i + 1)).slice(-2);
+          var meta = (s.duration || '') + (s.duration && s.price ? ' · ' : '') + (s.price || '');
+          return '<button class="bk-svc' + (s.featured ? ' bk-svc--feat' : '') + '" data-svc="' + escAttr(s.key) + '">' +
+            (s.featured ? '<span class="bk-svc-tag">✿ Legkeresettebb</span>' : '') +
+            '<span class="bk-svc-num">' + num + '</span>' +
+            '<span class="bk-svc-name">' + escHtml(s.name) + '</span>' +
+            '<span class="bk-svc-meta">' + escHtml(meta) + '</span>' +
+          '</button>';
+        }).join('');
+        wireServiceCards();
+      }
+
+      // 2) Public "Hat szertartás" services list
+      var list = document.querySelector('.services .list');
+      if (list) {
+        list.innerHTML = services.map(function(s, i) {
+          var num = ('0' + (i + 1)).slice(-2);
+          return '<li class="row' + (s.featured ? ' row--feat' : '') + '" data-svc="' + escAttr(s.key) + '">' +
+            '<span class="row__idx">' + num + '</span>' +
+            '<div class="row__main">' +
+              '<h3>' + escHtml(s.name) + '</h3>' +
+              '<p>' + escHtml(s.description) + '</p>' +
+              (s.featured ? '<span class="row__tag">✿ Legkeresettebb</span>' : '') +
+            '</div>' +
+            '<span class="row__time">' + escHtml(s.duration) + '</span>' +
+            '<span class="row__price">' + escHtml(s.price) + '</span>' +
+          '</li>';
+        }).join('');
+        // Rebind row click → open modal pre-selected
+        wirePublicServiceRows();
+      }
+    }
+
+    function wirePublicServiceRows() {
+      document.querySelectorAll('.row[data-svc]').forEach(function(row) {
+        if (row._svcBound) return; row._svcBound = true;
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function() {
+          var key = row.dataset.svc;
+          preselectService(key);
+          openModal();
+          ensureSlots().then(function() { renderCalendar(); setStep(2); });
+        });
+      });
+    }
+
+    function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>]/g, function(c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]; }); }
+    function escAttr(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+
+    wireServiceCards();   // wire hardcoded fallback cards immediately
 
     // ─── CALENDAR ───
     function renderCalendar() {
@@ -1477,13 +1548,19 @@
       });
     }
 
-    // Service rows in services list
+    // Service rows in services list — wire the initial hardcoded ones too
+    // (gets re-wired with backend data once services load)
     var SVC_MAP = { '01': 'hajfestes', '02': 'alkalmi', '03': 'keratin', '04': 'vagas', '05': 'konty', '06': 'konzultacio' };
     document.querySelectorAll('.row').forEach(function(row) {
+      if (row._svcBound) return; row._svcBound = true;
       row.style.cursor = 'pointer';
       row.addEventListener('click', function() {
-        var idx = row.querySelector('.row__idx');
-        if (idx && SVC_MAP[idx.textContent.trim()]) preselectService(SVC_MAP[idx.textContent.trim()]);
+        var key = row.dataset.svc;
+        if (!key) {
+          var idx = row.querySelector('.row__idx');
+          if (idx && SVC_MAP[idx.textContent.trim()]) key = SVC_MAP[idx.textContent.trim()];
+        }
+        if (key) preselectService(key);
         openModal();
         ensureSlots().then(function() { renderCalendar(); setStep(2); });
       });
@@ -1524,6 +1601,10 @@
     refreshNextSlots();
     // Pre-warm slot data so the modal opens instantly
     ensureSlots();
+    // Load services from backend (replaces hardcoded fallback if backend reachable)
+    BK.loadServices().then(function(services) {
+      if (services && services.length) renderServicesEverywhere(services);
+    }).catch(function() { /* silent — keep hardcoded fallback */ });
   })();
   </script>
   <!-- ============================================
