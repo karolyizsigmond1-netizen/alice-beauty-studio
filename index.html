@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alice Beauty Studio — Budapest</title>
+  <meta name="description" content="Mesterfodrászat és alkalmi szépség Zugló szívében. Egy vendég, egy figyelem." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Serif:ital@0;1&family=Pinyon+Script&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Decorative botanical accents (SVG) -->
+  <svg style="display:none">
+    <defs>
+      <symbol id="sprig" viewBox="0 0 120 200">
+        <g fill="none" stroke="currentColor" stroke-width="0.8" stroke-linecap="round">
+          <path d="M60 200 C 60 150, 60 100, 60 0"/>
+          <path d="M60 170 C 40 162, 28 158, 18 150"/>
+          <path d="M60 150 C 78 144, 90 138, 100 128"/>
+          <path d="M60 125 C 42 118, 32 112, 22 100"/>
+          <path d="M60 100 C 78 92, 88 84, 96 72"/>
+          <path d="M60 75 C 45 68, 36 60, 28 48"/>
+          <path d="M60 50 C 74 42, 82 32, 88 20"/>
+        </g>
+        <g fill="currentColor">
+          <ellipse cx="18" cy="150" rx="6" ry="3" transform="rotate(-30 18 150)"/>
+          <ellipse cx="100" cy="128" rx="6" ry="3" transform="rotate(30 100 128)"/>
+          <ellipse cx="22" cy="100" rx="6" ry="3" transform="rotate(-30 22 100)"/>
+          <ellipse cx="96" cy="72" rx="6" ry="3" transform="rotate(30 96 72)"/>
+          <ellipse cx="28" cy="48" rx="6" ry="3" transform="rotate(-30 28 48)"/>
+          <ellipse cx="88" cy="20" rx="6" ry="3" transform="rotate(30 88 20)"/>
+          <circle cx="60" cy="2" r="3"/>
+        </g>
+      </symbol>
+      <symbol id="bloom" viewBox="0 0 80 80">
+        <g fill="none" stroke="currentColor" stroke-width="0.8">
+          <circle cx="40" cy="40" r="3" fill="currentColor"/>
+          <ellipse cx="40" cy="22" rx="6" ry="14"/>
+          <ellipse cx="40" cy="58" rx="6" ry="14"/>
+          <ellipse cx="22" cy="40" rx="14" ry="6"/>
+          <ellipse cx="58" cy="40" rx="14" ry="6"/>
+          <ellipse cx="28" cy="28" rx="6" ry="12" transform="rotate(-45 28 28)"/>
+          <ellipse cx="52" cy="28" rx="6" ry="12" transform="rotate(45 52 28)"/>
+          <ellipse cx="28" cy="52" rx="6" ry="12" transform="rotate(45 28 52)"/>
+          <ellipse cx="52" cy="52" rx="6" ry="12" transform="rotate(-45 52 52)"/>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- NAV -->
+  <header class="nav" id="nav">
+    <div class="nav__inner">
+      <a href="#top" class="logo">
+        <span class="logo__mark">A</span>
+        <span class="logo__name">Alice <em>Beauty</em> Studio</span>
+      </a>
+      <nav class="nav__menu" aria-label="Navigation">
+        <a href="#work"><span class="idx">01</span>Munkáim</a>
+        <a href="#services"><span class="idx">02</span>Szolgáltatás</a>
+        <a href="#studio"><span class="idx">03</span>Stúdió</a>
+        <a href="#words"><span class="idx">04</span>Vélemények</a>
+      </nav>
+      <a href="#book" class="nav__cta">
+        Időpont
+        <span class="dot" aria-hidden="true"></span>
+      </a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero" id="top">
+    <svg class="hero__sprig hero__sprig--l" aria-hidden="true"><use href="#sprig"/></svg>
+    <svg class="hero__sprig hero__sprig--r" aria-hidden="true"><use href="#sprig"/></svg>
+
+    <div class="hero__grid">
+      <div class="hero__col-left">
+        <div class="hero__meta">
+          <span>Est. 2009</span>
+          <span class="hr"></span>
+          <span>Budapest · Zugló</span>
+        </div>
+        <h1 class="hero__title">
+          <span class="line">A csend</span>
+          <span class="line">amelyben <em>szebb</em></span>
+          <span class="line">leszel.</span>
+        </h1>
+        <div class="hero__sig">
+          <svg viewBox="0 0 60 60" aria-hidden="true"><use href="#bloom"/></svg>
+          <span>egy vendég · egy figyelem · egy nap a tiéd</span>
+        </div>
+      </div>
+      <div class="hero__col-right">
+        <figure class="hero__image">
+          <img src="img/p7.jpg" alt="Menyasszonyi smink és haj" loading="eager"/>
+          <figcaption><em>—</em> Plate I, Bridal '26</figcaption>
+        </figure>
+        <figure class="hero__image-small">
+          <img src="img/p11.jpg" alt="Menyasszonyi hajdísz, gyöngyökkel" loading="lazy"/>
+        </figure>
+      </div>
+    </div>
+
+    <div class="hero__foot">
+      <p class="hero__lead">
+        Egyszemélyes szépségstúdió Budapesten, ahol minden vendég
+        főszereplő. Hajfestés, balayage, alkalmi konty és smink —
+        figyelemmel, türelemmel, mesterséggel.
+      </p>
+      <div class="hero__cta">
+        <a href="#book" class="btn">Időpontot kérek</a>
+        <a href="#services" class="link">A szolgáltatások →</a>
+      </div>
+      <div class="hero__stats">
+        <div class="stat">
+          <span class="stat__num">15</span>
+          <span class="stat__label">év a szakmában</span>
+        </div>
+        <div class="stat">
+          <span class="stat__num">2400+</span>
+          <span class="stat__label">vendég</span>
+        </div>
+        <div class="stat">
+          <span class="stat__num">★ 4.98</span>
+          <span class="stat__label">visszajelzés</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORK -->
+  <section class="work" id="work">
+    <div class="container">
+      <header class="head">
+        <span class="kicker"><span class="kicker__num">01 —</span> Válogatás</span>
+        <h2 class="display">Friss <em>munkák.</em></h2>
+        <a href="#" class="link link--right">Teljes portfólió Instagramon →</a>
+      </header>
+
+      <div class="work__grid">
+        <figure class="work__item work__item--1">
+          <img src="img/p6.jpg" alt="Menyasszony virágokkal, hátulnézet"/>
+          <figcaption><span class="num">/01</span> Bridal · printemps '26</figcaption>
+        </figure>
+        <figure class="work__item work__item--2">
+          <img src="img/p2.jpg" alt="Menyasszonyi portré, mély rúzzsal"/>
+          <figcaption><span class="num">/02</span> Soft glam · maquillage</figcaption>
+        </figure>
+        <figure class="work__item work__item--3">
+          <img src="img/p1.jpg" alt="Konty virágokkal a hajban"/>
+          <figcaption><span class="num">/03</span> Editorial · floral</figcaption>
+        </figure>
+        <figure class="work__item work__item--4">
+          <img src="img/p4.jpg" alt="Rúzs festés folyamatban"/>
+          <figcaption><span class="num">/04</span> A munka közben</figcaption>
+        </figure>
+        <figure class="work__item work__item--5">
+          <img src="img/p11.jpg" alt="Gyöngyös hajdísz, konty"/>
+          <figcaption><span class="num">/05</span> Pearl details</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section class="services" id="services">
+    <svg class="services__bloom" aria-hidden="true"><use href="#bloom"/></svg>
+    <div class="container">
+      <header class="head head--split">
+        <div>
+          <span class="kicker"><span class="kicker__num">02 —</span> Szolgáltatások</span>
+          <h2 class="display">Hat szertartás, <br/><em>egy stúdió.</em></h2>
+        </div>
+        <p class="head__note">
+          Minden szolgáltatás konzultációval indul. <br/>Mert ami másnak
+          divat, az neked személyes.
+        </p>
+      </header>
+
+      <ul class="list">
+        <li class="row">
+          <span class="row__idx">01</span>
+          <div class="row__main">
+            <h3>Hajfestés &amp; balayage</h3>
+            <p>Bőrtónushoz illesztett, természetes átmenetek és divatos színek prémium festékekkel.</p>
+          </div>
+          <span class="row__time">90 – 180 min</span>
+          <span class="row__price">26 000 Ft<em>~tól</em></span>
+        </li>
+        <li class="row row--feat">
+          <span class="row__idx">02</span>
+          <div class="row__main">
+            <h3>Alkalmi konty &amp; smink</h3>
+            <p>Esküvő, ballagás, fotózás. Teljes look egy kézből — próbafestéssel és kipróbálással.</p>
+            <span class="row__tag">✿ Legkeresettebb</span>
+          </div>
+          <span class="row__time">60 – 120 min</span>
+          <span class="row__price">22 000 Ft<em>~tól</em></span>
+        </li>
+        <li class="row">
+          <span class="row__idx">03</span>
+          <div class="row__main">
+            <h3>Keratinos kezelés</h3>
+            <p>Selymes, fényes, könnyen kezelhető haj — hetekre szóló simaság, töredezés nélkül.</p>
+          </div>
+          <span class="row__time">120 min</span>
+          <span class="row__price">32 000 Ft<em>~tól</em></span>
+        </li>
+        <li class="row">
+          <span class="row__idx">04</span>
+          <div class="row__main">
+            <h3>Hajvágás &amp; formázás</h3>
+            <p>Arcformához igazított vonalvezetés. Ollóval — nem gépezettel.</p>
+          </div>
+          <span class="row__time">45 – 60 min</span>
+          <span class="row__price">9 000 Ft<em>~tól</em></span>
+        </li>
+        <li class="row">
+          <span class="row__idx">05</span>
+          <div class="row__main">
+            <h3>Klasszikus konty</h3>
+            <p>Esküvőhöz, alkalomhoz, hosszú estéhez. Tartós, kényelmes, fotózásálló.</p>
+          </div>
+          <span class="row__time">75 min</span>
+          <span class="row__price">18 000 Ft<em>~tól</em></span>
+        </li>
+        <li class="row">
+          <span class="row__idx">06</span>
+          <div class="row__main">
+            <h3>Konzultáció</h3>
+            <p>30 perces beszélgetés — szín, forma, alkalom. Mielőtt bármit elköteleznél.</p>
+          </div>
+          <span class="row__time">30 min</span>
+          <span class="row__price">díjmentes</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- STUDIO / ABOUT -->
+  <section class="studio" id="studio">
+    <div class="container studio__grid">
+      <aside class="studio__left">
+        <figure class="studio__photo">
+          <img src="img/hero.jpg" alt="Alice munka közben"/>
+          <span class="studio__badge">
+            <svg viewBox="0 0 60 60" aria-hidden="true"><use href="#bloom"/></svg>
+            <span>Alice</span>
+          </span>
+        </figure>
+        <figure class="studio__photo-sm">
+          <img src="img/p9.jpg" alt="Hajformázás közben"/>
+        </figure>
+        <span class="studio__caption"><em>—</em> A stúdió, hétköznap</span>
+      </aside>
+      <div class="studio__right">
+        <span class="kicker"><span class="kicker__num">03 —</span> A stúdió</span>
+        <h2 class="display display--xl">
+          Tizenöt év.<br/>
+          Egy stúdió.<br/>
+          <em>Számtalan történet.</em>
+        </h2>
+        <div class="studio__body">
+          <p>
+            Alice vagyok — mesterfodrász, smink-szakértő, és egy kicsit
+            megszállott pszichológus is, amikor a vendégeim
+            nálam vannak. A stúdióm Zugló nyugodt szegletében húzódik, ahol
+            egyszerre csak egy emberrel foglalkozom.
+          </p>
+          <p>
+            Nálam nem rohanunk, nem zsúfolódik a tér, nem alkudozunk a
+            minőségből. Több mint kétezer menyasszonyt kísértem már el
+            az esküvőjére, dolgoztam a <em>Queen</em> és az <em>Esküvő
+            Classic</em> magazinok fotózásain, és Subrina Professional
+            ambassador-ként segítek új technikákat formálni.
+          </p>
+        </div>
+        <dl class="studio__facts">
+          <div><dt>Mestervizsga</dt><dd>2009</dd></div>
+          <div><dt>Subrina ambassador</dt><dd>óta · 2014</dd></div>
+          <div><dt>Magazin közreműködő</dt><dd>Queen, Esküvő Classic</dd></div>
+          <div><dt>Egy alkalom</dt><dd>egy vendég, mindig</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORDS / TESTIMONIALS -->
+  <section class="words" id="words">
+    <div class="container">
+      <header class="head head--center">
+        <span class="kicker"><span class="kicker__num">04 —</span> Vendégeim mondták</span>
+        <h2 class="display">A tükör előtti <em>pillanatok.</em></h2>
+      </header>
+
+      <div class="words__grid">
+        <figure class="quote">
+          <span class="quote__bloom"><svg viewBox="0 0 80 80"><use href="#bloom"/></svg></span>
+          <p>Az esküvőm reggelén Alice nem csak a hajamat varázsolta el — a hangulatomat is. Soha nem éreztem magam ennyire önmagamnak.</p>
+          <figcaption>Eszter K. <span>— menyasszony, 2025</span></figcaption>
+        </figure>
+        <figure class="quote">
+          <span class="quote__bloom"><svg viewBox="0 0 80 80"><use href="#bloom"/></svg></span>
+          <p>Három különböző fodrásznál próbáltam a balayage-ot. Csak nála találtam azt a természetes árnyalatot, amit kerestem.</p>
+          <figcaption>Réka V. <span>— állandó vendég</span></figcaption>
+        </figure>
+        <figure class="quote">
+          <span class="quote__bloom"><svg viewBox="0 0 80 80"><use href="#bloom"/></svg></span>
+          <p>A keratinos kezelés után három hónapig nem hittem el, hogy az én hajam. Egyszerűen mesteri munka — és a stúdió is gyönyörű.</p>
+          <figcaption>Anna M. <span>— 2026 január</span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOOK -->
+  <section class="book" id="book">
+    <div class="book__photo" aria-hidden="true">
+      <img src="img/p3.jpg" alt=""/>
+    </div>
+    <div class="container book__inner">
+      <div class="book__left">
+        <span class="kicker kicker--light"><span class="kicker__num">05 —</span> Foglalás</span>
+        <h2 class="display display--light">
+          Foglalj <em>időpontot.</em>
+        </h2>
+        <p>
+          Az időpontok hetekre előre telnek be. Válaszd ki a számodra
+          ideális napot — én pedig gondoskodom a többiről.
+        </p>
+        <div class="book__cta">
+          <a href="#" class="btn btn--light">Foglalás Reservion</a>
+          <a href="tel:+36205473128" class="link link--light">+36 20 547 3128 →</a>
+        </div>
+      </div>
+
+      <div class="book__right">
+        <div class="slots">
+          <div class="slots__head">
+            <span>Soron következő alkalmak</span>
+            <span class="live"><i></i> élő</span>
+          </div>
+          <ul>
+            <li><span>Cs · máj 21</span><b>10:00</b></li>
+            <li class="taken"><span>P · máj 22</span><b>foglalt</b></li>
+            <li><span>Szo · máj 23</span><b>14:30</b></li>
+            <li><span>H · máj 25</span><b>09:00</b></li>
+            <li><span>K · máj 26</span><b>13:00</b></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="foot">
+    <div class="container foot__inner">
+      <div class="foot__brand">
+        <span class="logo__mark logo__mark--lg">A</span>
+        <p><em>Alice Beauty Studio</em> — egyszemélyes szépségstúdió Budapest Zugló kerületében. Alapítva 2009-ben.</p>
+      </div>
+      <div class="foot__cols">
+        <div>
+          <span class="foot__label">Cím</span>
+          <p>1143 Budapest<br/>Gizella út 35.<br/>II. emelet</p>
+        </div>
+        <div>
+          <span class="foot__label">Nyitva</span>
+          <p>H–P · 9 – 19<br/>Szo · 9 – 15<br/>Vasárnap zárva</p>
+        </div>
+        <div>
+          <span class="foot__label">Elérhetőség</span>
+          <p>
+            <a href="tel:+36205473128">+36 20 547 3128</a><br/>
+            <a href="mailto:alice1174@gmail.com">alice1174@gmail.com</a><br/>
+            <a href="#">@alicebeautystudio</a>
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="foot__rule">
+      <span>© 2026 Alice Beauty Studio</span>
+      <svg viewBox="0 0 80 80" class="foot__bloom"><use href="#bloom"/></svg>
+      <span>Made <em>with love</em> in Budapest</span>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+
+  <!-- ============================================
+       BOOKING MODAL — Demo appointment setter
+       ============================================ -->
+  <div class="bk-modal" id="bkModal" aria-hidden="true" role="dialog" aria-labelledby="bkTitle">
+    <div class="bk-backdrop" data-bk-close></div>
+    <div class="bk-dialog" role="document">
+      <button class="bk-close" data-bk-close aria-label="Bezárás">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+
+      <header class="bk-head">
+        <div class="bk-eyebrow">
+          <svg viewBox="0 0 80 80" class="bk-bloom" aria-hidden="true"><use href="#bloom"/></svg>
+          <span>Időpontfoglalás</span>
+        </div>
+        <h2 class="bk-title" id="bkTitle">Foglalj <em>időpontot.</em></h2>
+        <div class="bk-progress">
+          <div class="bk-step" data-step="1"><span>01</span><b>Szolgáltatás</b></div>
+          <div class="bk-step" data-step="2"><span>02</span><b>Dátum</b></div>
+          <div class="bk-step" data-step="3"><span>03</span><b>Időpont</b></div>
+          <div class="bk-step" data-step="4"><span>04</span><b>Adatok</b></div>
+        </div>
+      </header>
+
+      <div class="bk-body">
+        <!-- STEP 1: SERVICE -->
+        <section class="bk-pane" data-pane="1">
+          <h3 class="bk-pane-title">Milyen szertartást szeretnél?</h3>
+          <p class="bk-pane-sub">Válassz a szolgáltatások közül — később minden részleten finomíthatunk a konzultációnál.</p>
+          <div class="bk-services">
+            <button class="bk-svc" data-svc="hajfestes" data-time="90–180" data-price="26 000 Ft-tól">
+              <span class="bk-svc-num">01</span>
+              <span class="bk-svc-name">Hajfestés &amp; balayage</span>
+              <span class="bk-svc-meta">90–180 min · 26 000 Ft-tól</span>
+            </button>
+            <button class="bk-svc bk-svc--feat" data-svc="alkalmi" data-time="60–120" data-price="22 000 Ft-tól">
+              <span class="bk-svc-tag">✿ Legkeresettebb</span>
+              <span class="bk-svc-num">02</span>
+              <span class="bk-svc-name">Alkalmi konty &amp; smink</span>
+              <span class="bk-svc-meta">60–120 min · 22 000 Ft-tól</span>
+            </button>
+            <button class="bk-svc" data-svc="keratin" data-time="120" data-price="32 000 Ft-tól">
+              <span class="bk-svc-num">03</span>
+              <span class="bk-svc-name">Keratinos kezelés</span>
+              <span class="bk-svc-meta">120 min · 32 000 Ft-tól</span>
+            </button>
+            <button class="bk-svc" data-svc="vagas" data-time="45–60" data-price="9 000 Ft-tól">
+              <span class="bk-svc-num">04</span>
+              <span class="bk-svc-name">Hajvágás &amp; formázás</span>
+              <span class="bk-svc-meta">45–60 min · 9 000 Ft-tól</span>
+            </button>
+            <button class="bk-svc" data-svc="konty" data-time="75" data-price="18 000 Ft-tól">
+              <span class="bk-svc-num">05</span>
+              <span class="bk-svc-name">Klasszikus konty</span>
+              <span class="bk-svc-meta">75 min · 18 000 Ft-tól</span>
+            </button>
+            <button class="bk-svc" data-svc="konzultacio" data-time="30" data-price="díjmentes">
+              <span class="bk-svc-num">06</span>
+              <span class="bk-svc-name">Konzultáció</span>
+              <span class="bk-svc-meta">30 min · díjmentes</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- STEP 2: DATE -->
+        <section class="bk-pane" data-pane="2">
+          <h3 class="bk-pane-title">Mikor szeretnéd?</h3>
+          <p class="bk-pane-sub">Válassz egy napot a naptárból — a foglalt napok halványítva jelennek meg.</p>
+
+          <div class="bk-cal">
+            <div class="bk-cal-head">
+              <button class="bk-cal-nav" data-cal-prev aria-label="Előző hónap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <span class="bk-cal-month" id="bkCalMonth">Május 2026</span>
+              <button class="bk-cal-nav" data-cal-next aria-label="Következő hónap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            </div>
+            <div class="bk-cal-dows">
+              <span>H</span><span>K</span><span>Sz</span><span>Cs</span><span>P</span><span>Szo</span><span>V</span>
+            </div>
+            <div class="bk-cal-grid" id="bkCalGrid"></div>
+          </div>
+        </section>
+
+        <!-- STEP 3: TIME -->
+        <section class="bk-pane" data-pane="3">
+          <h3 class="bk-pane-title">Melyik időpont a legjobb?</h3>
+          <p class="bk-pane-sub" id="bkTimeSub">Választott nap — válassz egy szabad idősávot.</p>
+          <div class="bk-times" id="bkTimes"></div>
+        </section>
+
+        <!-- STEP 4: DETAILS -->
+        <section class="bk-pane" data-pane="4">
+          <h3 class="bk-pane-title">Egy utolsó lépés.</h3>
+          <p class="bk-pane-sub">Az adataidat csak az időpont-egyeztetésre használjuk — semmi spam, ígérem.</p>
+          <form class="bk-form" id="bkForm" novalidate>
+            <label class="bk-field">
+              <span>Név</span>
+              <input type="text" name="name" required placeholder="Pl. Kovács Eszter" autocomplete="name"/>
+            </label>
+            <label class="bk-field">
+              <span>Telefon</span>
+              <input type="tel" name="phone" required placeholder="+36 20 ..." autocomplete="tel"/>
+            </label>
+            <label class="bk-field bk-field--full">
+              <span>E-mail</span>
+              <input type="email" name="email" required placeholder="te@example.com" autocomplete="email"/>
+            </label>
+            <label class="bk-field bk-field--full">
+              <span>Megjegyzés <em>(opcionális)</em></span>
+              <textarea name="note" rows="3" placeholder="Pl. esküvőhöz, hajhossz, allergia, kérés..."></textarea>
+            </label>
+          </form>
+        </section>
+
+        <!-- CONFIRMATION -->
+        <section class="bk-pane bk-pane--confirm" data-pane="5">
+          <div class="bk-confirm">
+            <svg class="bk-check" viewBox="0 0 80 80" aria-hidden="true">
+              <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
+              <circle cx="40" cy="40" r="28" fill="currentColor" opacity="0.08"/>
+              <path d="M26 41 L 36 51 L 56 30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h3 class="bk-confirm-title"><em>Köszönöm,</em><br/>nálam vagy a könyvelésben.</h3>
+            <p class="bk-confirm-sub" id="bkConfirmSub">Megerősítő e-mailt küldök 5 percen belül.</p>
+            <dl class="bk-summary" id="bkSummary"></dl>
+            <p class="bk-confirm-note">
+              Ez egy <em>demo</em> foglalás — valós időpontfoglalásért hívd Alice-t <a href="tel:+36205473128">+36 20 547 3128</a>.
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <footer class="bk-foot">
+        <button class="bk-btn bk-btn--ghost" id="bkBack" type="button">← Vissza</button>
+        <div class="bk-foot-meta">
+          <span id="bkMeta">Válassz szolgáltatást</span>
+        </div>
+        <button class="bk-btn bk-btn--primary" id="bkNext" type="button" disabled>Tovább →</button>
+      </footer>
+    </div>
+  </div>
+
+  <style>
+    /* ============= BOOKING MODAL ============= */
+    .bk-modal {
+      position: fixed; inset: 0; z-index: 9998;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+      font-family: 'Schibsted Grotesk', -apple-system, system-ui, sans-serif;
+    }
+    .bk-modal.open { opacity: 1; pointer-events: auto; }
+    .bk-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(42, 24, 34, 0.55);
+      backdrop-filter: blur(12px) saturate(140%);
+      -webkit-backdrop-filter: blur(12px) saturate(140%);
+    }
+    .bk-dialog {
+      position: relative;
+      width: 100%;
+      max-width: 880px;
+      max-height: calc(100vh - 48px);
+      background: #faf5f6;
+      border-radius: 24px;
+      box-shadow: 0 40px 100px -20px rgba(42, 24, 34, 0.5);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      transform: translateY(30px) scale(0.97);
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .bk-modal.open .bk-dialog { transform: translateY(0) scale(1); }
+
+    .bk-close {
+      position: absolute; top: 20px; right: 20px; z-index: 5;
+      width: 38px; height: 38px;
+      background: rgba(42, 24, 34, 0.06);
+      border: 1px solid transparent;
+      border-radius: 50%;
+      cursor: pointer;
+      display: grid; place-items: center;
+      color: #2a1822;
+      transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    .bk-close svg { width: 16px; height: 16px; }
+    .bk-close:hover { background: #2a1822; color: #faf5f6; transform: rotate(90deg); }
+
+    .bk-head {
+      padding: 36px 56px 24px;
+      border-bottom: 1px solid rgba(42, 24, 34, 0.08);
+      background: linear-gradient(180deg, #faf5f6 0%, #f3eced 100%);
+    }
+    .bk-eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.22em; text-transform: uppercase;
+      color: #a4615c;
+      margin-bottom: 12px;
+    }
+    .bk-bloom { width: 18px; height: 18px; color: #a4615c; }
+    .bk-title {
+      font-family: 'DM Serif Display', serif;
+      font-weight: 400;
+      font-size: clamp(28px, 3.6vw, 44px);
+      line-height: 1.05;
+      letter-spacing: -0.012em;
+      color: #2a1822;
+      margin: 0 0 24px;
+    }
+    .bk-title em {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      color: #a4615c;
+    }
+    .bk-progress {
+      display: flex;
+      gap: 0;
+      position: relative;
+    }
+    .bk-progress::before {
+      content: '';
+      position: absolute;
+      top: 14px; left: 0; right: 0;
+      height: 1px;
+      background: rgba(42, 24, 34, 0.12);
+    }
+    .bk-step {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      z-index: 1;
+    }
+    .bk-step span {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: #faf5f6;
+      border: 1px solid rgba(42, 24, 34, 0.18);
+      display: grid; place-items: center;
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 12px;
+      color: #8e7680;
+      transition: all 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    .bk-step b {
+      font-weight: 500;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #8e7680;
+      transition: color 0.3s;
+    }
+    .bk-step.is-active span {
+      background: #2a1822;
+      border-color: #2a1822;
+      color: #faf5f6;
+      transform: scale(1.1);
+    }
+    .bk-step.is-active b { color: #2a1822; }
+    .bk-step.is-done span {
+      background: #a4615c;
+      border-color: #a4615c;
+      color: #faf5f6;
+    }
+    .bk-step.is-done b { color: #a4615c; }
+
+    .bk-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 40px 56px;
+      position: relative;
+    }
+    .bk-body::-webkit-scrollbar { width: 5px; }
+    .bk-body::-webkit-scrollbar-thumb { background: rgba(42, 24, 34, 0.15); border-radius: 4px; }
+
+    .bk-pane { display: none; animation: bkFade 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+    .bk-pane.is-active { display: block; }
+    @keyframes bkFade {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .bk-pane-title {
+      font-family: 'DM Serif Display', serif;
+      font-weight: 400;
+      font-size: 24px;
+      line-height: 1.2;
+      color: #2a1822;
+      margin: 0 0 8px;
+    }
+    .bk-pane-sub {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 16px;
+      color: #8e7680;
+      margin: 0 0 28px;
+      line-height: 1.5;
+    }
+
+    /* SERVICES grid */
+    .bk-services {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .bk-svc {
+      text-align: left;
+      padding: 20px 22px;
+      background: #faf5f6;
+      border: 1px solid rgba(42, 24, 34, 0.12);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+      display: flex; flex-direction: column; gap: 8px;
+      font-family: inherit;
+      position: relative;
+      overflow: hidden;
+    }
+    .bk-svc:hover {
+      border-color: #a4615c;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px -16px rgba(164, 97, 92, 0.4);
+    }
+    .bk-svc.is-selected {
+      background: #2a1822;
+      border-color: #2a1822;
+    }
+    .bk-svc.is-selected .bk-svc-num { color: #c4847f; }
+    .bk-svc.is-selected .bk-svc-name { color: #faf5f6; }
+    .bk-svc.is-selected .bk-svc-meta { color: rgba(250, 245, 246, 0.6); }
+    .bk-svc-num {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 13px;
+      color: #a4615c;
+      letter-spacing: 0.05em;
+    }
+    .bk-svc-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 19px;
+      color: #2a1822;
+      line-height: 1.15;
+    }
+    .bk-svc-meta {
+      font-size: 12px;
+      color: #8e7680;
+      letter-spacing: 0.04em;
+    }
+    .bk-svc-tag {
+      position: absolute;
+      top: 14px; right: 14px;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #a4615c;
+      background: rgba(196, 132, 127, 0.14);
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-weight: 500;
+    }
+    .bk-svc--feat { border-color: rgba(164, 97, 92, 0.35); }
+
+    /* CALENDAR */
+    .bk-cal {
+      background: #faf5f6;
+      border: 1px solid rgba(42, 24, 34, 0.08);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .bk-cal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .bk-cal-nav {
+      width: 32px; height: 32px;
+      background: transparent;
+      border: 1px solid rgba(42, 24, 34, 0.14);
+      border-radius: 50%;
+      cursor: pointer;
+      display: grid; place-items: center;
+      color: #2a1822;
+      transition: all 0.3s;
+    }
+    .bk-cal-nav svg { width: 14px; height: 14px; }
+    .bk-cal-nav:hover { background: #2a1822; color: #faf5f6; border-color: #2a1822; }
+    .bk-cal-month {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: #2a1822;
+    }
+    .bk-cal-dows {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .bk-cal-dows span {
+      text-align: center;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #8e7680;
+      padding: 8px 0;
+    }
+    .bk-cal-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    .bk-day {
+      aspect-ratio: 1;
+      display: grid; place-items: center;
+      border-radius: 50%;
+      font-size: 13px;
+      font-weight: 500;
+      color: #2a1822;
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+      position: relative;
+    }
+    .bk-day:hover:not(.is-empty):not(.is-past):not(.is-full) {
+      background: rgba(196, 132, 127, 0.18);
+      border-color: rgba(164, 97, 92, 0.3);
+    }
+    .bk-day.is-empty { cursor: default; }
+    .bk-day.is-past, .bk-day.is-sun {
+      color: rgba(42, 24, 34, 0.25);
+      cursor: not-allowed;
+      text-decoration: line-through;
+    }
+    .bk-day.is-full { color: rgba(42, 24, 34, 0.35); cursor: not-allowed; }
+    .bk-day.is-full::after {
+      content: '';
+      position: absolute;
+      bottom: 4px; left: 50%;
+      transform: translateX(-50%);
+      width: 4px; height: 4px;
+      background: #c4847f;
+      border-radius: 50%;
+    }
+    .bk-day.is-today { font-weight: 600; color: #a4615c; }
+    .bk-day.is-selected {
+      background: #2a1822;
+      color: #faf5f6;
+    }
+
+    /* TIME SLOTS */
+    .bk-times {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .bk-time {
+      padding: 14px 8px;
+      background: #faf5f6;
+      border: 1px solid rgba(42, 24, 34, 0.14);
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: #2a1822;
+      transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+      letter-spacing: 0.04em;
+    }
+    .bk-time:hover { border-color: #a4615c; transform: translateY(-2px); }
+    .bk-time.is-taken {
+      background: transparent;
+      color: rgba(42, 24, 34, 0.3);
+      cursor: not-allowed;
+      text-decoration: line-through;
+    }
+    .bk-time.is-taken:hover { transform: none; border-color: rgba(42, 24, 34, 0.14); }
+    .bk-time.is-selected {
+      background: #2a1822;
+      color: #faf5f6;
+      border-color: #2a1822;
+    }
+
+    /* FORM */
+    .bk-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .bk-field {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .bk-field--full { grid-column: 1 / -1; }
+    .bk-field span {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #8e7680;
+    }
+    .bk-field span em {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      letter-spacing: 0.02em;
+      text-transform: none;
+      color: #b4a0a8;
+      margin-left: 4px;
+    }
+    .bk-field input,
+    .bk-field textarea {
+      width: 100%;
+      padding: 13px 16px;
+      background: #faf5f6;
+      border: 1px solid rgba(42, 24, 34, 0.14);
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      color: #2a1822;
+      outline: none;
+      resize: vertical;
+      transition: border-color 0.3s, background 0.3s;
+    }
+    .bk-field input::placeholder,
+    .bk-field textarea::placeholder { color: #b4a0a8; font-style: italic; }
+    .bk-field input:focus,
+    .bk-field textarea:focus { border-color: #a4615c; background: #fff; }
+
+    /* CONFIRMATION */
+    .bk-pane--confirm { text-align: center; padding: 12px 0 24px; }
+    .bk-confirm { max-width: 480px; margin: 0 auto; }
+    .bk-check {
+      width: 80px; height: 80px;
+      color: #a4615c;
+      margin: 0 auto 20px;
+      display: block;
+      animation: bkCheck 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+    }
+    @keyframes bkCheck {
+      from { opacity: 0; transform: scale(0.6); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .bk-confirm-title {
+      font-family: 'DM Serif Display', serif;
+      font-weight: 400;
+      font-size: 32px;
+      line-height: 1.1;
+      color: #2a1822;
+      margin: 0 0 12px;
+    }
+    .bk-confirm-title em {
+      font-family: 'Pinyon Script', cursive;
+      font-style: normal;
+      color: #a4615c;
+      font-size: 42px;
+      vertical-align: -4px;
+    }
+    .bk-confirm-sub {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 16px;
+      color: #8e7680;
+      margin: 0 0 32px;
+    }
+    .bk-summary {
+      background: #f3eced;
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin: 0 0 24px;
+      text-align: left;
+      display: grid;
+      gap: 14px;
+    }
+    .bk-summary > div {
+      display: flex; justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(42, 24, 34, 0.08);
+    }
+    .bk-summary > div:last-child { border-bottom: none; padding-bottom: 0; }
+    .bk-summary dt {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #8e7680;
+    }
+    .bk-summary dd {
+      font-family: 'DM Serif Display', serif;
+      font-size: 17px;
+      color: #2a1822;
+      text-align: right;
+    }
+    .bk-confirm-note {
+      font-size: 13px;
+      color: #8e7680;
+      line-height: 1.6;
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+    }
+    .bk-confirm-note em {
+      color: #a4615c;
+      font-style: normal;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 10px;
+      font-family: 'Schibsted Grotesk', sans-serif;
+    }
+    .bk-confirm-note a { color: #2a1822; border-bottom: 1px solid #2a1822; }
+
+    /* FOOTER */
+    .bk-foot {
+      padding: 20px 56px 28px;
+      border-top: 1px solid rgba(42, 24, 34, 0.08);
+      background: #faf5f6;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px;
+    }
+    .bk-foot-meta {
+      flex: 1;
+      text-align: center;
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 14px;
+      color: #8e7680;
+    }
+    .bk-foot-meta b {
+      font-family: 'DM Serif Display', serif;
+      font-style: normal;
+      font-weight: 400;
+      color: #2a1822;
+    }
+    .bk-btn {
+      padding: 13px 24px;
+      border-radius: 100px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+      border: 1px solid transparent;
+    }
+    .bk-btn--ghost {
+      background: transparent;
+      color: #2a1822;
+      border-color: rgba(42, 24, 34, 0.18);
+    }
+    .bk-btn--ghost:hover:not(:disabled) {
+      background: rgba(42, 24, 34, 0.06);
+    }
+    .bk-btn--ghost:disabled { opacity: 0; cursor: default; pointer-events: none; }
+    .bk-btn--primary {
+      background: #2a1822;
+      color: #faf5f6;
+      border-color: #2a1822;
+    }
+    .bk-btn--primary:hover:not(:disabled) {
+      background: #a4615c;
+      border-color: #a4615c;
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px -12px rgba(164, 97, 92, 0.6);
+    }
+    .bk-btn--primary:disabled {
+      background: rgba(42, 24, 34, 0.18);
+      border-color: transparent;
+      cursor: not-allowed;
+    }
+
+    body.bk-lock { overflow: hidden; }
+
+    @media (max-width: 720px) {
+      .bk-modal { padding: 16px; align-items: flex-end; }
+      .bk-dialog { max-height: calc(100vh - 32px); border-radius: 20px; }
+      .bk-head { padding: 28px 28px 18px; }
+      .bk-body { padding: 28px; }
+      .bk-foot { padding: 16px 28px 22px; flex-wrap: wrap; }
+      .bk-foot-meta { order: -1; flex-basis: 100%; text-align: left; }
+      .bk-services { grid-template-columns: 1fr; }
+      .bk-times { grid-template-columns: repeat(3, 1fr); }
+      .bk-form { grid-template-columns: 1fr; }
+      .bk-step b { display: none; }
+      .bk-progress::before { top: 12px; }
+      .bk-confirm-title { font-size: 26px; }
+      .bk-close { top: 14px; right: 14px; }
+    }
+  </style>
+
+  <script>
+  (function() {
+    var modal = document.getElementById('bkModal');
+    var dialog = modal.querySelector('.bk-dialog');
+    var nextBtn = document.getElementById('bkNext');
+    var backBtn = document.getElementById('bkBack');
+    var metaEl = document.getElementById('bkMeta');
+    var calMonth = document.getElementById('bkCalMonth');
+    var calGrid = document.getElementById('bkCalGrid');
+    var timesEl = document.getElementById('bkTimes');
+    var timeSub = document.getElementById('bkTimeSub');
+    var form = document.getElementById('bkForm');
+    var summary = document.getElementById('bkSummary');
+    var confirmSub = document.getElementById('bkConfirmSub');
+    var steps = document.querySelectorAll('.bk-step');
+    var panes = document.querySelectorAll('.bk-pane');
+
+    var state = {
+      step: 1,
+      service: null, serviceName: null, serviceMeta: null,
+      date: null, dateLabel: null,
+      time: null,
+      name: '', phone: '', email: '', note: '',
+      viewMonth: new Date(2026, 4, 1) // May 2026
+    };
+
+    var MONTHS = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
+    var DAYS_HU = ['Vasárnap','Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat'];
+
+    // Fake availability: deterministic-ish "taken" pattern
+    function isFullDay(d) {
+      // Sundays closed; some Tuesdays/Fridays fully booked
+      var day = d.getDay();
+      if (day === 0) return 'sun';
+      var dom = d.getDate();
+      if ((day === 2 && dom % 4 === 0) || (day === 5 && dom % 3 === 0)) return 'full';
+      return null;
+    }
+    function todayMidnight() {
+      var t = new Date(); t.setHours(0,0,0,0); return t;
+    }
+
+    function openModal() {
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('bk-lock');
+      setStep(state.step);
+      renderCalendar();
+    }
+    function closeModal() {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('bk-lock');
+    }
+
+    function setStep(n) {
+      state.step = n;
+      panes.forEach(function(p) {
+        p.classList.toggle('is-active', +p.dataset.pane === n);
+      });
+      steps.forEach(function(s) {
+        var sn = +s.dataset.step;
+        s.classList.toggle('is-active', sn === n);
+        s.classList.toggle('is-done', sn < n);
+      });
+      backBtn.disabled = n === 1 || n === 5;
+      backBtn.style.visibility = (n === 1 || n === 5) ? 'hidden' : 'visible';
+
+      updateMeta();
+      updateNextState();
+
+      if (n === 5) {
+        nextBtn.textContent = 'Bezárás';
+        nextBtn.disabled = false;
+      } else if (n === 4) {
+        nextBtn.textContent = 'Foglalás megerősítése';
+      } else {
+        nextBtn.textContent = 'Tovább →';
+      }
+    }
+
+    function updateMeta() {
+      var parts = [];
+      if (state.serviceName) parts.push('<b>' + state.serviceName + '</b>');
+      if (state.dateLabel) parts.push(state.dateLabel);
+      if (state.time) parts.push(state.time);
+      if (state.step === 5) {
+        metaEl.innerHTML = 'Visszaigazolást küldök e-mailben';
+        return;
+      }
+      if (parts.length === 0) {
+        metaEl.innerHTML = ['Válassz szolgáltatást','Válassz dátumot','Válassz időpontot','Add meg az adatokat'][state.step - 1];
+      } else {
+        metaEl.innerHTML = parts.join(' · ');
+      }
+    }
+
+    function updateNextState() {
+      if (state.step === 1) nextBtn.disabled = !state.service;
+      else if (state.step === 2) nextBtn.disabled = !state.date;
+      else if (state.step === 3) nextBtn.disabled = !state.time;
+      else if (state.step === 4) nextBtn.disabled = !formValid();
+      else nextBtn.disabled = false;
+    }
+
+    function formValid() {
+      var fd = new FormData(form);
+      var name = (fd.get('name') || '').toString().trim();
+      var phone = (fd.get('phone') || '').toString().trim();
+      var email = (fd.get('email') || '').toString().trim();
+      var emailOk = /.+@.+\..+/.test(email);
+      return name.length >= 2 && phone.length >= 6 && emailOk;
+    }
+
+    // ── SERVICE picker ──
+    document.querySelectorAll('.bk-svc').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.bk-svc').forEach(function(b) { b.classList.remove('is-selected'); });
+        btn.classList.add('is-selected');
+        state.service = btn.dataset.svc;
+        state.serviceName = btn.querySelector('.bk-svc-name').textContent.trim();
+        state.serviceMeta = btn.querySelector('.bk-svc-meta').textContent.trim();
+        updateMeta();
+        updateNextState();
+      });
+    });
+
+    // ── CALENDAR ──
+    function renderCalendar() {
+      var view = state.viewMonth;
+      var year = view.getFullYear();
+      var month = view.getMonth();
+      calMonth.textContent = MONTHS[month] + ' ' + year;
+
+      var first = new Date(year, month, 1);
+      // Monday-first index: JS getDay() Sun=0..Sat=6 → Mon=0..Sun=6
+      var startOffset = (first.getDay() + 6) % 7;
+      var daysInMonth = new Date(year, month + 1, 0).getDate();
+      var today = todayMidnight();
+
+      calGrid.innerHTML = '';
+      for (var i = 0; i < startOffset; i++) {
+        var e = document.createElement('div');
+        e.className = 'bk-day is-empty';
+        calGrid.appendChild(e);
+      }
+      for (var d = 1; d <= daysInMonth; d++) {
+        var dt = new Date(year, month, d);
+        var btn = document.createElement('button');
+        btn.className = 'bk-day';
+        btn.textContent = d;
+        btn.type = 'button';
+        var full = isFullDay(dt);
+        var isPast = dt < today;
+        if (isPast) btn.classList.add('is-past');
+        else if (full === 'sun') btn.classList.add('is-sun');
+        else if (full === 'full') btn.classList.add('is-full');
+        if (dt.toDateString() === today.toDateString()) btn.classList.add('is-today');
+        if (state.date && new Date(state.date).toDateString() === dt.toDateString()) {
+          btn.classList.add('is-selected');
+        }
+        (function(date, isBlocked) {
+          btn.addEventListener('click', function() {
+            if (isBlocked) return;
+            state.date = date.toISOString();
+            state.dateLabel = DAYS_HU[date.getDay()] + ', ' + MONTHS[date.getMonth()] + ' ' + date.getDate() + '.';
+            state.time = null;
+            renderCalendar();
+            updateMeta();
+            updateNextState();
+          });
+        })(dt, isPast || full);
+        calGrid.appendChild(btn);
+      }
+    }
+
+    document.querySelector('[data-cal-prev]').addEventListener('click', function() {
+      state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() - 1, 1);
+      renderCalendar();
+    });
+    document.querySelector('[data-cal-next]').addEventListener('click', function() {
+      state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() + 1, 1);
+      renderCalendar();
+    });
+
+    // ── TIME slots ──
+    function renderTimes() {
+      timesEl.innerHTML = '';
+      var date = new Date(state.date);
+      var isSat = date.getDay() === 6;
+      var slots = isSat
+        ? ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30']
+        : ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30'];
+      // Pseudo-random taken pattern from date
+      var seed = date.getDate() + date.getMonth() * 31;
+      slots.forEach(function(s, i) {
+        var taken = ((seed * 7 + i * 13) % 5 === 0) || ((seed + i) % 11 === 0);
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'bk-time' + (taken ? ' is-taken' : '');
+        b.textContent = s;
+        if (state.time === s) b.classList.add('is-selected');
+        if (!taken) {
+          b.addEventListener('click', function() {
+            state.time = s;
+            renderTimes();
+            updateMeta();
+            updateNextState();
+          });
+        }
+        timesEl.appendChild(b);
+      });
+      timeSub.textContent = state.dateLabel + ' — válassz egy szabad idősávot.';
+    }
+
+    // ── FORM live validation ──
+    form.addEventListener('input', function() {
+      var fd = new FormData(form);
+      state.name = (fd.get('name') || '').toString().trim();
+      state.phone = (fd.get('phone') || '').toString().trim();
+      state.email = (fd.get('email') || '').toString().trim();
+      state.note = (fd.get('note') || '').toString().trim();
+      updateNextState();
+    });
+
+    // ── Navigation ──
+    nextBtn.addEventListener('click', function() {
+      if (state.step === 5) { closeModal(); return; }
+      if (state.step === 3) {
+        // moving to details
+        setStep(4);
+        return;
+      }
+      if (state.step === 4) {
+        // submit
+        renderSummary();
+        setStep(5);
+        return;
+      }
+      if (state.step === 2) renderTimes();
+      setStep(state.step + 1);
+    });
+    backBtn.addEventListener('click', function() {
+      if (state.step > 1) setStep(state.step - 1);
+    });
+
+    function renderSummary() {
+      summary.innerHTML = '';
+      var rows = [
+        ['Szolgáltatás', state.serviceName + ' · ' + (state.serviceMeta.split('·')[1] || '').trim()],
+        ['Időpont', state.dateLabel + ' · ' + state.time],
+        ['Név', state.name],
+        ['Elérhetőség', state.phone + ' · ' + state.email]
+      ];
+      rows.forEach(function(r) {
+        var d = document.createElement('div');
+        d.innerHTML = '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+        summary.appendChild(d);
+      });
+      confirmSub.innerHTML = 'Megerősítő e-mailt küldök <b>' + state.email + '</b> címre 5 percen belül.';
+    }
+
+    // ── Close handlers ──
+    modal.querySelectorAll('[data-bk-close]').forEach(function(el) {
+      el.addEventListener('click', closeModal);
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+    });
+
+    // ── Trigger wiring ──
+    // Anything that points to #book or #booking, or has data-book attribute, opens the modal
+    function preselectService(svcKey) {
+      var b = document.querySelector('.bk-svc[data-svc="' + svcKey + '"]');
+      if (b) b.click();
+    }
+    function preselectDateTime(dateStr, timeStr) {
+      // dateStr like "máj 23" or full label — we just jump to step 2
+      state.viewMonth = new Date(2026, 4, 1);
+      renderCalendar();
+    }
+
+    document.querySelectorAll('a[href="#book"], a[href="#booking"]').forEach(function(a) {
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+        openModal();
+      });
+    });
+
+    // Hero "Időpontot kérek" + booking-section buttons + nav CTA
+    // (already covered above by href="#book"/"#booking")
+
+    // Slot list items in booking section — open modal at step 2/3
+    document.querySelectorAll('.slots li:not(.taken)').forEach(function(li) {
+      li.style.cursor = 'pointer';
+      li.addEventListener('click', function() {
+        var dateText = li.querySelector('span').textContent;
+        var timeText = li.querySelector('b').textContent;
+        // Try to map "Cs · máj 21" → date in May 2026
+        var dayMatch = dateText.match(/(\d+)/);
+        if (dayMatch) {
+          var d = new Date(2026, 4, parseInt(dayMatch[1], 10));
+          state.viewMonth = new Date(2026, 4, 1);
+          state.date = d.toISOString();
+          state.dateLabel = DAYS_HU[d.getDay()] + ', ' + MONTHS[d.getMonth()] + ' ' + d.getDate() + '.';
+          state.time = timeText;
+        }
+        openModal();
+        // If no service yet, stay at step 1; otherwise jump ahead
+        setStep(state.service ? 4 : 1);
+        if (state.date) renderTimes();
+      });
+    });
+
+    // Service rows in the services list — open modal pre-selected
+    var SVC_MAP = {
+      '01': 'hajfestes', '02': 'alkalmi', '03': 'keratin',
+      '04': 'vagas', '05': 'konty', '06': 'konzultacio'
+    };
+    document.querySelectorAll('.row').forEach(function(row) {
+      row.style.cursor = 'pointer';
+      row.addEventListener('click', function() {
+        var idx = row.querySelector('.row__idx');
+        if (idx && SVC_MAP[idx.textContent.trim()]) {
+          preselectService(SVC_MAP[idx.textContent.trim()]);
+        }
+        openModal();
+        setStep(2);
+      });
+    });
+
+    // Reset state when closed
+    modal.addEventListener('transitionend', function(e) {
+      if (e.target === modal && !modal.classList.contains('open')) {
+        // soft reset for next open
+        state.step = 1;
+        state.date = null; state.dateLabel = null; state.time = null;
+        // keep service so user doesn't have to re-pick if they reopen quickly
+      }
+    });
+  })();
+  </script>
+  <!-- ============================================
+       END BOOKING MODAL
+       ============================================ -->
+
+  <!-- ============================================
+       ALICE BEAUTY CHATBOT — Alice Asszisztens
+       ============================================ -->
+  <style>
+    .ab-chat-toggle {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2a1822 0%, #7a3447 100%);
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 10px 30px -8px rgba(42, 24, 34, 0.5), 0 0 0 6px rgba(196, 132, 127, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 0.3s;
+      z-index: 10000;
+    }
+    .ab-chat-toggle:hover { transform: scale(1.08) rotate(-6deg); box-shadow: 0 14px 36px -8px rgba(122, 52, 71, 0.6), 0 0 0 8px rgba(196, 132, 127, 0.25); }
+    .ab-chat-toggle svg { width: 28px; height: 28px; color: #faf5f6; }
+    .ab-chat-toggle .ab-close-icon { display: none; }
+    .ab-chat-toggle.open .ab-chat-icon { display: none; }
+    .ab-chat-toggle.open .ab-close-icon { display: block; }
+
+    .ab-chat-window {
+      position: fixed;
+      bottom: 104px;
+      right: 28px;
+      width: 400px;
+      max-width: calc(100vw - 32px);
+      height: 600px;
+      max-height: calc(100vh - 140px);
+      background: #faf5f6;
+      border-radius: 24px;
+      box-shadow: 0 30px 80px -20px rgba(42, 24, 34, 0.35), 0 0 0 1px rgba(42, 24, 34, 0.06);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(20px) scale(0.96);
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      font-family: 'Schibsted Grotesk', -apple-system, system-ui, sans-serif;
+    }
+    .ab-chat-window.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+
+    .ab-chat-header {
+      background: linear-gradient(135deg, #2a1822 0%, #4a2e3d 60%, #7a3447 100%);
+      color: #faf5f6;
+      padding: 22px 24px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .ab-chat-header::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -30px;
+      width: 140px; height: 140px;
+      background: radial-gradient(circle, rgba(196, 132, 127, 0.25), transparent 70%);
+      pointer-events: none;
+    }
+    .ab-chat-header .ab-avatar {
+      width: 46px; height: 46px; border-radius: 50%;
+      background: #faf5f6;
+      color: #2a1822;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Serif Display', serif;
+      font-size: 24px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 0 0 4px rgba(196, 132, 127, 0.3);
+    }
+    .ab-chat-header .ab-info { position: relative; z-index: 1; }
+    .ab-chat-header .ab-info h3 {
+      font-family: 'DM Serif Display', serif;
+      font-weight: 400;
+      font-size: 18px;
+      margin: 0;
+      letter-spacing: 0.005em;
+    }
+    .ab-chat-header .ab-info h3 em {
+      font-family: 'Pinyon Script', cursive;
+      font-style: normal;
+      color: #c4847f;
+      font-size: 22px;
+      vertical-align: -1px;
+    }
+    .ab-chat-header .ab-info p {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 12px;
+      opacity: 0.8;
+      margin: 4px 0 0;
+      letter-spacing: 0.02em;
+    }
+
+    .ab-status-dot {
+      width: 7px; height: 7px; background: #d9b18a; border-radius: 50%;
+      display: inline-block; margin-right: 6px;
+      box-shadow: 0 0 0 0 rgba(217, 177, 138, 0.6);
+      animation: abPulse 2.4s infinite;
+    }
+    @keyframes abPulse {
+      70% { box-shadow: 0 0 0 8px rgba(217, 177, 138, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(217, 177, 138, 0); }
+    }
+
+    .ab-chat-messages {
+      flex: 1; overflow-y: auto; padding: 20px;
+      display: flex; flex-direction: column; gap: 12px;
+      background: #f3eced;
+      background-image:
+        radial-gradient(ellipse 80% 60% at 90% 0%, rgba(196, 132, 127, 0.10), transparent 60%),
+        radial-gradient(ellipse 60% 50% at 10% 100%, rgba(122, 52, 71, 0.06), transparent 60%);
+    }
+    .ab-chat-messages::-webkit-scrollbar { width: 4px; }
+    .ab-chat-messages::-webkit-scrollbar-thumb { background: rgba(42, 24, 34, 0.15); border-radius: 4px; }
+    .ab-chat-messages::-webkit-scrollbar-track { background: transparent; }
+
+    .ab-message {
+      max-width: 86%; padding: 12px 16px;
+      font-size: 14px; line-height: 1.55;
+      animation: abFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      white-space: pre-wrap;
+      letter-spacing: 0.005em;
+    }
+    @keyframes abFadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    .ab-message.bot {
+      background: #faf5f6;
+      color: #2a1822;
+      border: 1px solid rgba(42, 24, 34, 0.08);
+      align-self: flex-start;
+      border-radius: 18px 18px 18px 4px;
+      box-shadow: 0 2px 8px -2px rgba(42, 24, 34, 0.06);
+    }
+    .ab-message.user {
+      background: linear-gradient(135deg, #2a1822 0%, #4a2e3d 100%);
+      color: #faf5f6;
+      align-self: flex-end;
+      border-radius: 18px 18px 4px 18px;
+    }
+    .ab-message.typing {
+      background: #faf5f6;
+      border: 1px solid rgba(42, 24, 34, 0.08);
+      align-self: flex-start;
+      border-radius: 18px 18px 18px 4px;
+      padding: 14px 18px;
+    }
+    .ab-typing-dots { display: flex; gap: 5px; }
+    .ab-typing-dots span {
+      width: 7px; height: 7px; background: #c4847f; border-radius: 50%;
+      animation: abBounce 1.4s infinite;
+    }
+    .ab-typing-dots span:nth-child(2) { animation-delay: 0.18s; }
+    .ab-typing-dots span:nth-child(3) { animation-delay: 0.36s; }
+    @keyframes abBounce { 0%,60%,100% { transform:translateY(0); opacity: 0.5; } 30% { transform:translateY(-6px); opacity: 1; } }
+
+    .ab-quick-replies {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      padding: 0 18px 12px;
+      background: #f3eced;
+      flex-shrink: 0;
+    }
+    .ab-quick-reply {
+      background: #faf5f6;
+      border: 1px solid rgba(42, 24, 34, 0.16);
+      color: #2a1822;
+      padding: 7px 14px;
+      border-radius: 100px;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+      font-family: inherit;
+      letter-spacing: 0.01em;
+    }
+    .ab-quick-reply:hover {
+      background: #2a1822;
+      color: #faf5f6;
+      border-color: #2a1822;
+      transform: translateY(-1px);
+    }
+
+    .ab-chat-input-area {
+      padding: 14px 16px;
+      background: #faf5f6;
+      border-top: 1px solid rgba(42, 24, 34, 0.08);
+      display: flex; gap: 10px; align-items: center;
+      flex-shrink: 0;
+    }
+    .ab-chat-input-area input {
+      flex: 1;
+      border: 1px solid rgba(42, 24, 34, 0.14);
+      border-radius: 100px;
+      padding: 11px 18px;
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+      background: #f3eced;
+      color: #2a1822;
+      transition: border-color 0.25s, background 0.25s;
+    }
+    .ab-chat-input-area input::placeholder { color: #8e7680; font-style: italic; }
+    .ab-chat-input-area input:focus { border-color: #c4847f; background: #faf5f6; }
+    .ab-chat-input-area button {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: linear-gradient(135deg, #2a1822, #7a3447);
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px -4px rgba(122, 52, 71, 0.5);
+    }
+    .ab-chat-input-area button:hover { transform: scale(1.08); box-shadow: 0 6px 16px -4px rgba(122, 52, 71, 0.7); }
+    .ab-chat-input-area button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .ab-chat-input-area button svg { width: 16px; height: 16px; color: #faf5f6; }
+
+    .ab-foot-line {
+      text-align: center;
+      padding: 8px;
+      font-size: 10px;
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #c4847f;
+      background: #faf5f6;
+      flex-shrink: 0;
+      border-top: 1px solid rgba(42, 24, 34, 0.05);
+    }
+    .ab-foot-line span { color: #2a1822; opacity: 0.5; margin: 0 6px; }
+
+    @media (max-width: 480px) {
+      .ab-chat-window { bottom: 92px; right: 16px; left: 16px; width: auto; }
+      .ab-chat-toggle { bottom: 20px; right: 20px; width: 56px; height: 56px; }
+    }
+  </style>
+
+  <!-- Chat toggle -->
+  <button class="ab-chat-toggle" id="abChatToggle" aria-label="Chat megnyitása">
+    <!-- bloom flower icon -->
+    <svg class="ab-chat-icon" viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="40" cy="40" r="3.5" fill="currentColor"/>
+      <ellipse cx="40" cy="22" rx="6" ry="14"/>
+      <ellipse cx="40" cy="58" rx="6" ry="14"/>
+      <ellipse cx="22" cy="40" rx="14" ry="6"/>
+      <ellipse cx="58" cy="40" rx="14" ry="6"/>
+      <ellipse cx="28" cy="28" rx="5.5" ry="12" transform="rotate(-45 28 28)"/>
+      <ellipse cx="52" cy="28" rx="5.5" ry="12" transform="rotate(45 52 28)"/>
+      <ellipse cx="28" cy="52" rx="5.5" ry="12" transform="rotate(45 28 52)"/>
+      <ellipse cx="52" cy="52" rx="5.5" ry="12" transform="rotate(-45 52 52)"/>
+    </svg>
+    <svg class="ab-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M18 6L6 18M6 6l12 12"/>
+    </svg>
+  </button>
+
+  <!-- Chat window -->
+  <div class="ab-chat-window" id="abChatWindow">
+    <div class="ab-chat-header">
+      <div class="ab-avatar">A</div>
+      <div class="ab-info">
+        <h3>Alice <em>asszisztens</em></h3>
+        <p><span class="ab-status-dot"></span>Online — válaszra készen</p>
+      </div>
+    </div>
+    <div class="ab-chat-messages" id="abChatMessages"></div>
+    <div class="ab-quick-replies" id="abQuickReplies"></div>
+    <div class="ab-chat-input-area">
+      <input type="text" id="abChatInput" placeholder="Kérdezz szolgáltatásról, árról, időpontról..." autocomplete="off">
+      <button id="abSendBtn" aria-label="Küldés">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+    <div class="ab-foot-line">✿<span>Alice Beauty Studio</span>✿<span>Budapest, Zugló</span>✿</div>
+  </div>
+
+  <script>
+  (function() {
+    var WEBHOOK = '';        // set this if you wire up a live n8n / API endpoint
+    var DEMO_MODE = true;    // local scripted responses
+
+    var sessionId = 'ab-' + Math.random().toString(36).substring(2, 10);
+    var isOpen = false;
+    var isSending = false;
+
+    var toggle  = document.getElementById('abChatToggle');
+    var win     = document.getElementById('abChatWindow');
+    var msgs    = document.getElementById('abChatMessages');
+    var input   = document.getElementById('abChatInput');
+    var sendBtn = document.getElementById('abSendBtn');
+    var quickEl = document.getElementById('abQuickReplies');
+
+    toggle.addEventListener('click', function() {
+      isOpen = !isOpen;
+      toggle.classList.toggle('open', isOpen);
+      win.classList.toggle('open', isOpen);
+      if (isOpen) { input.focus(); if (msgs.children.length === 0) showWelcome(); }
+    });
+
+    function showWelcome() {
+      addMsg('bot', 'Szia, drágám! ✿ Üdv az Alice Beauty Studio-ban.\n\nSegítek megtalálni a számodra ideális szolgáltatást és időpontot foglalni Alice-nál.\n\nMiben segíthetek ma?');
+      showQuick(['Milyen szolgáltatásokat kínáltok?', 'Esküvői smink és haj', 'Árak', 'Időpontot foglalnék']);
+    }
+
+    function addMsg(role, text) {
+      var d = document.createElement('div');
+      d.className = 'ab-message ' + role;
+      d.textContent = text;
+      msgs.appendChild(d);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function showTyping() {
+      var d = document.createElement('div');
+      d.className = 'ab-message typing'; d.id = 'abTyping';
+      d.innerHTML = '<div class="ab-typing-dots"><span></span><span></span><span></span></div>';
+      msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
+    }
+    function hideTyping() { var e = document.getElementById('abTyping'); if (e) e.remove(); }
+
+    function showQuick(opts) {
+      quickEl.innerHTML = '';
+      opts.forEach(function(t) {
+        var b = document.createElement('button');
+        b.className = 'ab-quick-reply'; b.textContent = t;
+        b.addEventListener('click', function() { send(t); });
+        quickEl.appendChild(b);
+      });
+    }
+
+    function send(text) {
+      if (!text || !text.trim() || isSending) return;
+      var t = text.trim();
+      addMsg('user', t); quickEl.innerHTML = ''; input.value = '';
+      isSending = true; sendBtn.disabled = true; showTyping();
+
+      var lower = t.toLowerCase();
+
+      if (DEMO_MODE || !WEBHOOK) {
+        getReply(lower).then(function(r) {
+          hideTyping(); addMsg('bot', r); setFollowUp(lower);
+          isSending = false; sendBtn.disabled = false; input.focus();
+        });
+        return;
+      }
+
+      fetch(WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: t, sessionId: sessionId })
+      })
+      .then(function(res) { return res.text(); })
+      .then(function(raw) {
+        var reply = null;
+        if (raw && raw.trim()) {
+          try { var d = JSON.parse(raw); reply = d.reply || d.message || d.output || d.text; } catch(e) {}
+        }
+        if (!reply) return getReply(lower);
+        return reply;
+      })
+      .catch(function() { return getReply(lower); })
+      .then(function(r) {
+        hideTyping(); addMsg('bot', r); setFollowUp(lower);
+        isSending = false; sendBtn.disabled = false; input.focus();
+      });
+    }
+
+    function setFollowUp(lower) {
+      if (lower.match(/szolgáltatás|kínál|milyen.*van|mit.*csinál/)) {
+        showQuick(['Hajfestés / balayage', 'Alkalmi konty és smink', 'Keratinos kezelés', 'Hajvágás']);
+      } else if (lower.match(/esküvő|menyasszony|nuptial|bridal/)) {
+        showQuick(['Mit tartalmaz?', 'Mennyibe kerül?', 'Próbafestés', 'Időpontot foglalnék']);
+      } else if (lower.match(/balayage|festés|szín|highlights/)) {
+        showQuick(['Mennyi ideig tart?', 'Milyen festéket használsz?', 'Ár', 'Időpontot foglalnék']);
+      } else if (lower.match(/smink|maquillage|makeup/)) {
+        showQuick(['Nappali smink', 'Esküvői smink', 'Mennyi ideig tart?', 'Időpontot foglalnék']);
+      } else if (lower.match(/konty|chignon|frizura|haj/)) {
+        showQuick(['Klasszikus konty', 'Esküvői frizura', 'Mit kell hozni?', 'Időpontot foglalnék']);
+      } else if (lower.match(/keratin|simítás|tartós/)) {
+        showQuick(['Mennyi ideig tart hatása?', 'Mennyibe kerül?', 'Időpontot foglalnék']);
+      } else if (lower.match(/ár|díj|mennyibe|csomag|price/)) {
+        showQuick(['Hajfestés árak', 'Esküvői csomag', 'Hajvágás', 'Időpontot foglalnék']);
+      } else if (lower.match(/foglal|időpont|szabad|elérhet|book/)) {
+        showQuick(['Telefonon', 'E-mailen', 'Milyen napokon?', 'Konzultáció']);
+      } else if (lower.match(/hol|címe|helye|stúdió|cím/)) {
+        showQuick(['Megközelítés', 'Parkolás', 'Nyitva tartás', 'Időpontot foglalnék']);
+      } else if (lower.match(/alice|rólad|tapasztalat|ki.*vagy/)) {
+        showQuick(['Milyen referenciáid vannak?', 'Mennyi tapasztalat?', 'Szolgáltatások', 'Időpontot foglalnék']);
+      } else {
+        showQuick(['Szolgáltatások', 'Árak', 'Időpontot foglalnék', 'Kapcsolat']);
+      }
+    }
+
+    function getReply(lower) {
+      return new Promise(function(resolve) {
+        setTimeout(function() {
+          // SERVICES OVERVIEW
+          if (lower.match(/szolgáltatás|kínál|milyen.*van|mit.*csinál|service/)) {
+            resolve('Az Alice Beauty Studio szolgáltatásai ✿\n\n• Hajfestés és balayage — 26 000 Ft-tól\n• Alkalmi konty és smink — 22 000 Ft-tól\n• Keratinos kezelés — 32 000 Ft-tól\n• Hajvágás és formázás — 9 000 Ft-tól\n• Klasszikus konty — 18 000 Ft-tól\n• Konzultáció — díjmentes\n\nMinden szolgáltatás konzultációval indul. Melyik érdekel?');
+          }
+          // WEDDING / BRIDAL
+          else if (lower.match(/esküvő|menyasszony|nuptial|bridal/)) {
+            if (lower.match(/próba|trial/)) {
+              resolve('A próbafestés és próbasmink kifejezetten ajánlott esküvő előtt — így mindkettőnk nyugodt, és a Nagy Napon nincs meglepetés.\n\nIdőtartam: kb. 60–90 perc.\nIdőzítés: ideális 4–6 héttel az esküvő előtt.\n\nA próba ára beleszámít a végleges csomagba. Részletekért keress: +36 20 547 3128.');
+            } else if (lower.match(/tartalmaz|csomag|include/)) {
+              resolve('Az esküvői csomag tartalma ✿\n\n• Konzultáció és próbafestés\n• Próbasmink + próbafrizura\n• A Nagy Napon: teljes smink + frizura\n• Tartós, könnyekálló technikák\n• Útmutató a fátyol és koszorú elhelyezéséhez\n• Igény szerint helyszíni készülés is\n\nÁra a részletektől függ — 22 000 Ft-tól indul. Egyedi ajánlatért keress: alice1174@gmail.com.');
+            } else {
+              resolve('Az esküvői smink és haj Alice egyik szakterülete — több mint 2400 menyasszonyt készített fel az évek alatt, és a Queen és Esküvő Classic magazinok fotózásain is dolgozott.\n\nA folyamat: konzultáció ➜ próba ➜ A Nagy Nap.\nÁr: 22 000 Ft-tól, csomagtól függően.\nIdőtartam: 60–120 perc Nagy Napon.\n\nFoglalás: +36 20 547 3128 vagy alice1174@gmail.com.');
+            }
+          }
+          // BALAYAGE / COLOR
+          else if (lower.match(/balayage|festés|szín|highlights|color/)) {
+            resolve('Hajfestés és balayage ✿\n\nBőrtónushoz illesztett, természetes átmenetek és divatos színek. Alice Subrina Professional ambassador, így prémium festékekkel dolgozik.\n\n• Időtartam: 90–180 perc\n• Ár: 26 000 Ft-tól (hajhossztól függ)\n• Tartalmaz: konzultáció, festés, mosás, szárítás\n\nL\'Oréal Balayage Advanced képzett. Foglalás: +36 20 547 3128.');
+          }
+          // MAKEUP
+          else if (lower.match(/smink|maquillage|makeup/)) {
+            resolve('Smink szolgáltatások ✿\n\nAlice professzionális sminkes — alkalmi smink (esküvő, ballagás, fotózás) a fő szakterülete, de bármilyen alkalmi look elkészíthető.\n\n• Időtartam: 45–90 perc\n• Ár: 18 000 – 28 000 Ft alkalomtól függően\n• Tartós, könnyekálló, fotózásálló technikák\n\nA Queen és Esküvő Classic fotózásain is dolgozott. Foglalás: alice1174@gmail.com.');
+          }
+          // UPDO
+          else if (lower.match(/konty|chignon|frizura|alkalmi/)) {
+            resolve('Alkalmi és klasszikus kontyok ✿\n\nEsküvő, ballagás, fotózás, hosszú esték — minden alkalomra. Tartós, kényelmes, fotózásálló.\n\n• Klasszikus konty: 18 000 Ft-tól · 75 perc\n• Alkalmi konty + smink együtt: 22 000 Ft-tól\n• Esküvői csomag külön ajánlatkérésre\n\nFoglalás: +36 20 547 3128.');
+          }
+          // KERATIN
+          else if (lower.match(/keratin|simítás|tartós/)) {
+            resolve('Keratinos kezelés ✿\n\nSelymes, fényes, könnyen kezelhető haj — hetekre szóló simaság, töredezés nélkül.\n\n• Időtartam: 120 perc\n• Ár: 32 000 Ft-tól\n• Hatás: 3–4 hónap, hajtípustól függően\n• Vegyszermentes formula\n\nKeress további részletekért: alice1174@gmail.com.');
+          }
+          // HAIRCUT
+          else if (lower.match(/vágás|cut|coupe|frizura.*változ/)) {
+            resolve('Hajvágás és formázás ✿\n\nArcformához igazított vonalvezetés. Ollóval — nem gépezettel. Mosás, vágás, szárítás mindig kéznél.\n\n• Időtartam: 45–60 perc\n• Ár: 9 000 Ft-tól\n• Konzultáció minden vágás előtt\n\nFoglalás: +36 20 547 3128.');
+          }
+          // PRICING
+          else if (lower.match(/ár|díj|mennyibe|csomag|price|cost/)) {
+            resolve('Aktuális árak ✿\n\n• Hajvágás: 9 000 Ft-tól\n• Klasszikus konty: 18 000 Ft-tól\n• Alkalmi konty + smink: 22 000 Ft-tól\n• Hajfestés / balayage: 26 000 Ft-tól\n• Keratinos kezelés: 32 000 Ft-tól\n• Konzultáció: díjmentes\n\nAz árak hajhossztól és a kívánt látvány komplexitásától függhetnek. Egyedi ajánlat: alice1174@gmail.com.');
+          }
+          // BOOKING
+          else if (lower.match(/foglal|időpont|szabad|elérhet|book|reserv/)) {
+            resolve('Időpontfoglalás ✿\n\n📞 Telefon: +36 20 547 3128\n📧 E-mail: alice1174@gmail.com\n📸 Instagram: @alicebeautystudio\n🌐 Online: Reservio rendszerben\n\nNyitva tartás:\n• H–P · 9:00 – 19:00\n• Szo · 9:00 – 15:00\n• Vasárnap zárva\n\nMivel egyszemélyes stúdió, az időpontok hetekre előre telnek — érdemes minél hamarabb foglalni!');
+          }
+          // LOCATION
+          else if (lower.match(/hol|címe|helye|stúdió|cím|address|location/)) {
+            resolve('Alice Beauty Studio ✿\n\n📍 1143 Budapest, Gizella út 35.\nII. emelet (Zugló)\n\nNyitva: H–P 9–19, Szo 9–15, V zárva\n\nA stúdió egy nyugodt, csendes belső térben található — egyszerre csak egy vendéggel. A pontos cím- és érkezés-leírást a foglalás visszaigazolása után küldöm.\n\nKérdés? +36 20 547 3128');
+          }
+          // ABOUT ALICE
+          else if (lower.match(/alice|rólad|tapasztalat|ki.*vagy|about/)) {
+            resolve('Alice — mester a háttérben ✿\n\nMesterfodrász és sminkes, több mint 15 éve a szakmában (mestervizsga: 2009).\n\n• Subrina Professional brand ambassador\n• L\'Oréal Balayage Advanced képzett\n• Queen és Esküvő Classic magazin közreműködő\n• 2400+ menyasszony készülésén dolgozott már\n\nEgyszemélyes stúdió — egy vendég egyszerre, teljes figyelem. Nálam nem rohanunk.');
+          }
+          // CONSULTATION
+          else if (lower.match(/konzultáció|consult|tanács/)) {
+            resolve('Ingyenes konzultáció ✿\n\n30 perces beszélgetés — szín, forma, alkalom. Mielőtt bármit elköteleznél.\n\nIdeális ha:\n• Új színen vagy frizurán gondolkodsz\n• Esküvőd közeleg és tervezel\n• Bizonytalan vagy, mi illik hozzád\n\nFoglalás: +36 20 547 3128 vagy alice1174@gmail.com.');
+          }
+          // OPENING HOURS
+          else if (lower.match(/nyitva|nyitás|zárás|hours|mikor/)) {
+            resolve('Nyitva tartás ✿\n\n• Hétfő – Péntek · 9:00 – 19:00\n• Szombat · 9:00 – 15:00\n• Vasárnap · zárva\n\nMivel egyszemélyes a stúdió, csak előre foglalt időpontokra dolgozom. Foglalás: +36 20 547 3128.');
+          }
+          // CONTACT
+          else if (lower.match(/kapcsolat|elér|contact|telefon|email|instagram/)) {
+            resolve('Elérhetőség ✿\n\n📞 +36 20 547 3128\n📧 alice1174@gmail.com\n📸 @alicebeautystudio (Instagram)\n📍 1143 Budapest, Gizella út 35. II. emelet\n\nA leggyorsabb foglalás telefonon vagy Instagram üzenetben. Általában aznap visszajelzek.');
+          }
+          // FALLBACK
+          else {
+            resolve('Jó kérdés! ✿ Erre szívesebben válaszol Alice személyesen.\n\n📞 +36 20 547 3128\n📧 alice1174@gmail.com\n📸 @alicebeautystudio\n\nJelezd a szolgáltatás típusát és a preferált időpontot — hamarosan visszajelez.');
+          }
+        }, 600 + Math.random() * 800);
+      });
+    }
+
+    sendBtn.addEventListener('click', function() { send(input.value); });
+    input.addEventListener('keydown', function(e) { if (e.key === 'Enter') send(input.value); });
+  })();
+  </script>
+  <!-- ============================================
+       END ALICE BEAUTY CHATBOT
+       ============================================ -->
+</body>
+</html>
