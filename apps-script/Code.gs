@@ -229,7 +229,19 @@ function batchDelete_(sh, pred) {
   for (let i = 1; i < data.length; i++) {
     if (pred(data[i])) toDeleteRows.push(i + 1);
   }
-  // walk from bottom up, grouping contiguous rows
+  if (toDeleteRows.length === 0) return { removed: 0 };
+
+  // EDGE CASE: Sheets won't let you delete ALL non-frozen rows
+  // (sheet must retain at least one data row after the frozen header).
+  // If we'd delete every data row, use clearContent on the range instead —
+  // it logically does the same thing for our purposes (a header-only sheet).
+  const totalDataRows = data.length - 1; // minus header
+  if (toDeleteRows.length >= totalDataRows && totalDataRows > 0) {
+    sh.getRange(2, 1, totalDataRows, sh.getLastColumn()).clearContent();
+    return { removed: totalDataRows };
+  }
+
+  // Otherwise: walk from bottom up, grouping contiguous rows
   toDeleteRows.sort(function(a, b) { return b - a; });
   let i = 0;
   while (i < toDeleteRows.length) {
