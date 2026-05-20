@@ -1131,29 +1131,29 @@
     var BK = (function() {
       var url = (window.BK_CONFIG && window.BK_CONFIG.backendUrl) || '';
       var STORAGE_KEY = 'bk_demo_state_v1';
-      var CACHE_TTL_MS = 30 * 1000; // 30 seconds
 
-      // Cache wrapper: hits sessionStorage, falls through to network on miss/stale.
-      // Apps Script roundtrips are ~1s each; this makes the 2nd+ open feel instant.
+      // localStorage stale-while-revalidate cache. Cache survives across
+      // tabs/sessions/restarts. Network refresh happens in background.
       function cached(key, fetcher) {
-        try {
-          var raw = sessionStorage.getItem(key);
-          if (raw) {
-            var c = JSON.parse(raw);
-            if (c && c.ts && (Date.now() - c.ts) < CACHE_TTL_MS) {
-              return Promise.resolve(c.data);
-            }
-          }
-        } catch (e) {}
-        return fetcher().then(function(data) {
-          try { sessionStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
+        var stored = null;
+        try { stored = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) {}
+        var fresh = fetcher().then(function(data) {
+          try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
           return data;
         });
+        // If we have stored data, return it instantly. Caller can opt in to
+        // a fresh update by attaching .then() to fresh, but the existing
+        // call sites just resolve once — so we use Promise.race for fastest.
+        if (stored && stored.data) {
+          fresh.catch(function() {}); // prevent unhandled rejection
+          return Promise.resolve(stored.data);
+        }
+        return fresh;
       }
       function bustCache() {
         try {
-          sessionStorage.removeItem('bk_cache_slots');
-          sessionStorage.removeItem('bk_cache_services');
+          localStorage.removeItem('bk_cache_slots');
+          localStorage.removeItem('bk_cache_services');
         } catch (e) {}
       }
 

@@ -2327,32 +2327,45 @@ body.abk-locked { overflow: hidden; }
   var steps = document.querySelectorAll('.abk-step');
   var panes = document.querySelectorAll('.abk-pane');
 
-  function cached(key, ttl, fetcher) {
+  // ── STALE-WHILE-REVALIDATE CACHE ──────────────────────────────────────
+  // Uses localStorage so cache survives across tabs / sessions / device
+  // restarts. On every load: if we have stored data we return it INSTANTLY
+  // (even if stale), then refresh in the background and update the UI
+  // when the new data arrives. Only the very first visit ever pays the
+  // full network cost; every subsequent visit feels instant.
+  function readCache(key) {
     try {
-      var raw = sessionStorage.getItem(key);
-      if (raw) {
-        var c = JSON.parse(raw);
-        if (c && c.ts && (Date.now() - c.ts) < ttl) return Promise.resolve(c.data);
-      }
+      var c = JSON.parse(localStorage.getItem(key) || 'null');
+      if (c && c.data) return c;
     } catch (e) {}
-    return fetcher().then(function(data) {
-      try { sessionStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
-      return data;
-    });
+    return null;
   }
-  function bustCache() { try { sessionStorage.removeItem('abk_cache_slots'); sessionStorage.removeItem('abk_cache_services'); } catch (e) {} }
+  function writeCache(key, data) {
+    try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
+  }
+  function bustCache() { try { localStorage.removeItem('abk_cache_slots'); localStorage.removeItem('abk_cache_services'); } catch (e) {} }
 
-  function loadServices() {
-    return cached('abk_cache_services', CACHE_TTL_MS, function() {
-      return fetch(BACKEND_URL + '?action=services').then(function(r) { return r.json(); })
-        .then(function(j) { if (!j.ok) throw new Error(j.error); return j.services || []; });
-    });
+  /**
+   * Calls onData(data, isFresh) with whatever's available:
+   *  - immediately with stale cached data if present (isFresh=false)
+   *  - then with fresh network data when it arrives (isFresh=true)
+   */
+  function loadSWR(key, fetcher, onData) {
+    var stored = readCache(key);
+    if (stored) onData(stored.data, false);
+    fetcher().then(function(data) {
+      writeCache(key, data);
+      onData(data, true);
+    }).catch(function() {});
   }
-  function loadSlots() {
-    return cached('abk_cache_slots', SLOTS_TTL_MS, function() {
-      return fetch(BACKEND_URL + '?action=slots').then(function(r) { return r.json(); })
-        .then(function(j) { if (!j.ok) throw new Error(j.error); return j.slots || []; });
-    });
+
+  function fetchServices() {
+    return fetch(BACKEND_URL + '?action=services').then(function(r) { return r.json(); })
+      .then(function(j) { if (!j.ok) throw new Error(j.error); return j.services || []; });
+  }
+  function fetchSlots() {
+    return fetch(BACKEND_URL + '?action=slots').then(function(r) { return r.json(); })
+      .then(function(j) { if (!j.ok) throw new Error(j.error); return j.slots || []; });
   }
   function submitBookingRemote(payload) {
     return fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -2370,20 +2383,27 @@ body.abk-locked { overflow: hidden; }
     return out;
   }
 
-  // Bind pre-rendered service cards immediately (zero-network UX)
-  bindServiceCards();
-
-  // Pre-warm both fetches in parallel on page load
-  loadServices().then(function(svcs) { state.services = svcs; renderServices(); }).catch(function() {});
-  loadSlots().then(function(slots) {
+  function applyServices(svcs) {
+    if (!svcs || !svcs.length) return;
+    state.services = svcs;
+    renderServices();
+  }
+  function applySlots(slots) {
     state.slotsByDate = {};
-    slots.forEach(function(s) {
+    (slots || []).forEach(function(s) {
       if (!state.slotsByDate[s.date]) state.slotsByDate[s.date] = [];
       state.slotsByDate[s.date].push(s.time);
     });
     Object.keys(state.slotsByDate).forEach(function(k) { state.slotsByDate[k].sort(); });
     if (state.step === 2) renderCalendar();
-  }).catch(function() {});
+  }
+
+  // Bind pre-rendered service cards immediately (zero-network UX for first-time visitors)
+  bindServiceCards();
+
+  // Stale-while-revalidate: every visit after the first feels instant
+  loadSWR('abk_cache_services', fetchServices, function(data, isFresh) { applyServices(data); });
+  loadSWR('abk_cache_slots',    fetchSlots,    function(data, isFresh) { applySlots(data); });
 
   function openModal() {
     modal.classList.add('is-open'); modal.setAttribute('aria-hidden', 'false');
