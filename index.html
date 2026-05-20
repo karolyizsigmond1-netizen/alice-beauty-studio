@@ -1567,6 +1567,7 @@
         state.bookingId = res.bookingId;
         state.demoOnly = !!res.demo;
         state.emailWarning = res.emailWarning || null;
+        state.bookingStatus = res.status || 'confirmed';
         renderSummary();
         setStep(5);
         // remove ALL the consecutive slots this booking consumed (so calendar reflects it)
@@ -1601,6 +1602,8 @@
         confirmSub.innerHTML = '<b>Demo mód:</b> e-mail nem ment ki — ha a backend csatlakozik, élesben mindkét fél kap visszaigazolót.';
       } else if (state.emailWarning) {
         confirmSub.innerHTML = '⚠ A foglalás rögzítve, de az e-mail küldés sikertelen volt:<br/><code style="font-size:12px;color:#b6463f;">' + state.emailWarning + '</code><br/><br/>Futtasd az Apps Script editorban az <b>enableEmail</b> függvényt, hogy a Gmail-küldés jogosultság megkapja.';
+      } else if (state.bookingStatus === 'pending') {
+        confirmSub.innerHTML = '⏳ A foglalásod <b>jóváhagyásra vár</b>. Amint Alice megerősíti (általában néhány órán belül), e-mailben értesítünk a <b>' + state.email + '</b> címen.';
       } else {
         confirmSub.innerHTML = 'Megerősítő e-mailt küldök <b>' + state.email + '</b> címre — érkezhet a Spam mappába is, érdemes ott is megnézni.';
       }

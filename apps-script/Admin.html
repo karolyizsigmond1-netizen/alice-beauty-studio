@@ -272,8 +272,15 @@
   .booking-status { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; padding: 4px 10px; border-radius: 100px; }
   .booking-status.confirmed { background: rgba(111,168,107,0.18); color: #3f6c3b; }
   .booking-status.cancelled { background: rgba(140,140,140,0.18); color: #6e6e6e; }
+  .booking-status.pending { background: rgba(192,133,43,0.18); color: var(--warn); }
+  .booking-item.is-pending { border-color: rgba(192,133,43,0.4); background: rgba(192,133,43,0.04); }
+  .booking-actions { display: flex; flex-direction: column; gap: 6px; align-items: stretch; min-width: 120px; }
   .booking-cancel { background: transparent; border: 1px solid var(--line); border-radius: 100px; padding: 6px 14px; font-size: 11px; cursor: pointer; color: var(--bad); font-family: inherit; }
   .booking-cancel:hover { background: var(--bad); color: #fff; border-color: var(--bad); }
+  .booking-approve { background: var(--ok); border: 1px solid var(--ok); border-radius: 100px; padding: 6px 14px; font-size: 11px; cursor: pointer; color: #fff; font-family: inherit; font-weight: 600; letter-spacing: 0.04em; }
+  .booking-approve:hover { background: #5a7050; border-color: #5a7050; }
+  .booking-decline { background: var(--bad); border: 1px solid var(--bad); border-radius: 100px; padding: 6px 14px; font-size: 11px; cursor: pointer; color: #fff; font-family: inherit; font-weight: 600; letter-spacing: 0.04em; }
+  .booking-decline:hover { background: #8e302a; border-color: #8e302a; }
 
   /* TOAST */
   .toast {
@@ -995,11 +1002,14 @@
       bannerSub.textContent = 'Tovább szeretnél? Az automatikus feltöltés a meglévő mellé tesz új időpontokat — duplikációkat kihagy.';
       autoFillBtn.textContent = '✿ Tovább a következő 30 napra';
     }
-    bkCount.textContent = state.bookings.filter(function(b) {
-      return b.status === 'confirmed' && (b.date + ' ' + b.time) >= todayNowKey();
-    }).length || '';
+    var pendingCount = state.bookings.filter(function(b) { return b.status === 'pending'; }).length;
     var futureBookings = state.bookings.filter(function(b) { return b.status === 'confirmed' && (b.date + ' ' + b.time) >= todayNowKey(); });
-    bkStat.textContent = futureBookings.length + ' jövőbeli · ' + state.bookings.length + ' összesen';
+    if (pendingCount > 0) {
+      bkCount.innerHTML = '· <span style="color:#c0852b;font-weight:700;">⏳ ' + pendingCount + '</span>';
+    } else {
+      bkCount.textContent = futureBookings.length ? '· ' + futureBookings.length : '';
+    }
+    bkStat.textContent = (pendingCount ? pendingCount + ' jóváhagyásra vár · ' : '') + futureBookings.length + ' jövőbeli · ' + state.bookings.length + ' összesen';
   }
   function todayNowKey() {
     var n = new Date();
@@ -1238,11 +1248,31 @@
       return;
     }
     bookingsList.innerHTML = '';
-    state.bookings.forEach(function(b) {
+    // Sort: pending first (most urgent), then confirmed, then cancelled
+    var sorted = state.bookings.slice().sort(function(a, b) {
+      var order = { pending: 0, confirmed: 1, cancelled: 2 };
+      var oa = order[a.status] != null ? order[a.status] : 3;
+      var ob = order[b.status] != null ? order[b.status] : 3;
+      if (oa !== ob) return oa - ob;
+      return (a.date + ' ' + a.time) < (b.date + ' ' + b.time) ? -1 : 1;
+    });
+
+    sorted.forEach(function(b) {
       var d = parseIso(b.date);
       var dayLabel = DAYS_HU[d.getDay()] + ', ' + MONTHS_HU[d.getMonth()] + ' ' + d.getDate() + '.';
       var item = document.createElement('div');
-      item.className = 'booking-item';
+      item.className = 'booking-item' + (b.status === 'pending' ? ' is-pending' : '');
+      var statusLabel = b.status === 'confirmed' ? 'Megerősítve'
+        : b.status === 'cancelled' ? 'Lemondva'
+        : b.status === 'pending' ? '⏳ Jóváhagyásra vár'
+        : b.status;
+      var actions = '';
+      if (b.status === 'pending') {
+        actions = '<button class="booking-approve" data-id="' + b.bookingId + '">✓ Elfogadás</button>' +
+                  '<button class="booking-decline" data-id="' + b.bookingId + '">✕ Elutasítás</button>';
+      } else if (b.status === 'confirmed') {
+        actions = '<button class="booking-cancel" data-id="' + b.bookingId + '">Lemondás</button>';
+      }
       item.innerHTML =
         '<div class="booking-when">' + b.time + '<small>' + dayLabel + '</small></div>' +
         '<div class="booking-info">' +
@@ -1254,12 +1284,41 @@
           '</span>' +
           (b.note ? '<span class="booking-contact" style="margin-top:6px;color:#4a2e3d;"><i>"' + escapeHtml(b.note) + '"</i></span>' : '') +
         '</div>' +
-        '<div style="display:flex;gap:8px;align-items:center;flex-direction:column;">' +
-          '<span class="booking-status ' + b.status + '">' + (b.status === 'confirmed' ? 'Megerősítve' : 'Lemondva') + '</span>' +
-          (b.status === 'confirmed' ? '<button class="booking-cancel" data-id="' + b.bookingId + '">Lemondás</button>' : '') +
+        '<div class="booking-actions">' +
+          '<span class="booking-status ' + b.status + '">' + statusLabel + '</span>' +
+          actions +
         '</div>';
       bookingsList.appendChild(item);
     });
+
+    bookingsList.querySelectorAll('.booking-approve').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (!confirm('Elfogadod ezt a foglalást?\n\nA vendég automatikusan kap visszaigazoló e-mailt.')) return;
+        btn.disabled = true; btn.textContent = 'Folyamatban...';
+        run('adminApproveBooking', pw, btn.dataset.id).then(function() {
+          toast('✓ Foglalás elfogadva, vendég értesítve.', 'ok');
+          loadAll();
+        }).catch(function(e) {
+          btn.disabled = false; btn.textContent = '✓ Elfogadás';
+          toast(e.message || 'Hiba', 'err');
+        });
+      });
+    });
+
+    bookingsList.querySelectorAll('.booking-decline').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (!confirm('Elutasítod ezt a foglalást?\n\nA vendég automatikusan kap egy elutasító e-mailt, az idősáv újra szabad.')) return;
+        btn.disabled = true; btn.textContent = 'Folyamatban...';
+        run('adminDeclineBooking', pw, btn.dataset.id).then(function() {
+          toast('✕ Foglalás elutasítva, idősáv felszabadítva.', 'ok');
+          loadAll();
+        }).catch(function(e) {
+          btn.disabled = false; btn.textContent = '✕ Elutasítás';
+          toast(e.message || 'Hiba', 'err');
+        });
+      });
+    });
+
     bookingsList.querySelectorAll('.booking-cancel').forEach(function(btn) {
       btn.addEventListener('click', function() {
         if (!confirm('Biztosan lemondod ezt a foglalást?\n\nA vendég AUTOMATIKUSAN kap egy értesítő e-mailt a lemondásról.')) return;

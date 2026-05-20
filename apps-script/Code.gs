@@ -16,7 +16,12 @@ const CONFIG = {
   businessPhone: '+36 20 547 3128',
   adminPassword: 'alice2026',                    // change after first deploy via Admin → Beállítások
   timezone:      'Europe/Budapest',
-  defaultSlotDurationMin: 60
+  defaultSlotDurationMin: 60,
+  // When true, new bookings start as 'pending' and the owner gets an email
+  // with Approve / Decline buttons. The customer only gets a confirmation
+  // email after the owner approves (or a "sorry" email if declined).
+  // Set to false to auto-approve every booking immediately.
+  requireApproval: true
 };
 
 const SHEET_SLOTS    = 'Slots';
@@ -69,6 +74,11 @@ function doGet(e) {
     return jsonOk_(withCache_('public_services', 300, function() {
       return { services: getServices_() };
     }));
+  }
+
+  // Owner-action endpoints (one-click approve/decline from email)
+  if (action === 'approve' || action === 'decline') {
+    return ownerActionResponse_(action, p.id, p.t);
   }
 
   return jsonOk_({ ok: true, service: 'alice-booking', version: '1.0' });
@@ -312,13 +322,15 @@ function createBooking_(b) {
   }
 
   const bookingId = 'BK-' + Utilities.getUuid().substring(0, 8).toUpperCase();
-  // Block all consecutive slots with the same bookingId
+  // Block all consecutive slots with the same bookingId so they can't be double-booked
+  // while waiting for the owner's decision.
   expectedTimes.forEach(function(t) {
     const r = rowByTime[t];
     sh.getRange(r.row, 3).setValue('booked');
     sh.getRange(r.row, 4).setValue(bookingId);
   });
 
+  const startStatus = CONFIG.requireApproval ? 'pending' : 'confirmed';
   const bk = sheet_(SHEET_BOOKINGS);
   bk.appendRow([
     bookingId,
@@ -332,19 +344,25 @@ function createBooking_(b) {
     b.phone || '',
     b.email,
     b.note || '',
-    'confirmed'
+    startStatus
   ]);
 
   bustPublicCache_();
 
   let emailWarning = null;
   try {
-    sendEmails_(b, bookingId);
+    if (CONFIG.requireApproval) {
+      // Owner gets an email with Approve / Decline buttons; customer is not
+      // notified until the owner actions one of them.
+      sendOwnerActionEmail_(b, bookingId);
+    } else {
+      sendEmails_(b, bookingId);  // legacy auto-confirm path
+    }
   } catch (e) {
     emailWarning = e.message || String(e);
     Logger.log('Email send failed: ' + emailWarning);
   }
-  return { ok: true, bookingId: bookingId, emailWarning: emailWarning };
+  return { ok: true, bookingId: bookingId, status: startStatus, emailWarning: emailWarning };
 }
 
 function cancelBooking_(bookingId) {
@@ -560,6 +578,232 @@ function getAllBookings_() {
 }
 
 // ============== EMAIL ==============
+
+// ============== APPROVAL WORKFLOW ==============
+
+/** Persistent secret used to sign owner-action URLs. Auto-created on first use. */
+function getActionSecret_() {
+  const props = PropertiesService.getScriptProperties();
+  let s = props.getProperty('ACTION_TOKEN_SECRET');
+  if (!s) {
+    s = Utilities.getUuid() + Utilities.getUuid().replace(/-/g, '');
+    props.setProperty('ACTION_TOKEN_SECRET', s);
+  }
+  return s;
+}
+
+/** Generate a URL-safe 16-char HMAC token for (bookingId, action). */
+function actionToken_(bookingId, action) {
+  const sig = Utilities.computeHmacSha256Signature(bookingId + ':' + action, getActionSecret_());
+  return Utilities.base64EncodeWebSafe(sig).substring(0, 16);
+}
+
+/** The current Web App URL — same one the widget posts to. */
+function webAppUrl_() {
+  return ScriptApp.getService().getUrl();
+}
+
+/** Load a booking record by bookingId. */
+function getBookingById_(bookingId) {
+  const bk = sheet_(SHEET_BOOKINGS);
+  const data = bk.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === bookingId) {
+      return {
+        row:         i + 1,
+        bookingId:   String(data[i][0]),
+        created:     data[i][1],
+        date:        asDateStr_(data[i][2]),
+        time:        asTimeStr_(data[i][3]),
+        service:     String(data[i][4] || ''),
+        serviceName: String(data[i][5] || ''),
+        serviceMeta: String(data[i][6] || ''),
+        name:        String(data[i][7] || ''),
+        phone:       String(data[i][8] || ''),
+        email:       String(data[i][9] || ''),
+        note:        String(data[i][10] || ''),
+        status:      String(data[i][11] || '')
+      };
+    }
+  }
+  return null;
+}
+
+/** Process an approve/decline click from the owner's email. Returns an HTML response. */
+function ownerActionResponse_(action, bookingId, token) {
+  if (!bookingId) return htmlResult_('Hibás kérés', 'Hiányzó foglalási azonosító.', false);
+  if (actionToken_(bookingId, action) !== token) {
+    return htmlResult_('Érvénytelen link', 'Ez a link már nem érvényes, vagy hibás.', false);
+  }
+  const b = getBookingById_(bookingId);
+  if (!b) return htmlResult_('Nincs ilyen foglalás', 'A foglalási azonosító nem található.', false);
+
+  if (b.status === 'cancelled') return htmlResult_('Már lemondva', 'Ez a foglalás már korábban le lett mondva.', false);
+  if (b.status === 'confirmed' && action === 'approve') {
+    return htmlResult_('Már elfogadva', 'Ez a foglalás már korábban el lett fogadva. A vendég értesítve.', true);
+  }
+
+  try {
+    if (action === 'approve') {
+      approveBooking_(b);
+      return htmlResult_('Elfogadva ✓', 'A foglalás megerősítve. A vendég automatikusan kapott visszaigazoló e-mailt.', true);
+    } else {
+      declineBooking_(b);
+      return htmlResult_('Elutasítva ✕', 'A foglalás visszautasítva, az idősáv újra szabad. A vendég értesítve kapott egy elutasító e-mailt.', true);
+    }
+  } catch (e) {
+    return htmlResult_('Hiba', e.message || String(e), false);
+  }
+}
+
+function approveBooking_(b) {
+  const bk = sheet_(SHEET_BOOKINGS);
+  bk.getRange(b.row, 12).setValue('confirmed');
+  try { sendApprovedClientEmail_(b); } catch (e) { Logger.log('Approval email failed: ' + e.message); }
+  bustPublicCache_();
+}
+
+function declineBooking_(b) {
+  const bk = sheet_(SHEET_BOOKINGS);
+  bk.getRange(b.row, 12).setValue('cancelled');
+  // Free the slots
+  const sh = sheet_(SHEET_SLOTS);
+  const data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][3]) === b.bookingId) {
+      sh.getRange(i + 1, 3).setValue('free');
+      sh.getRange(i + 1, 4).setValue('');
+    }
+  }
+  try { sendDeclinedClientEmail_(b); } catch (e) { Logger.log('Decline email failed: ' + e.message); }
+  bustPublicCache_();
+}
+
+/** Admin can also approve/decline manually from the admin panel. */
+function adminApproveBooking(password, bookingId) {
+  if (!adminAuth(password)) throw new Error('Hibás jelszó');
+  const b = getBookingById_(bookingId);
+  if (!b) throw new Error('Nem található foglalás');
+  if (b.status !== 'pending') throw new Error('Csak függő foglalás fogadható el');
+  approveBooking_(b);
+  return { ok: true };
+}
+function adminDeclineBooking(password, bookingId) {
+  if (!adminAuth(password)) throw new Error('Hibás jelszó');
+  const b = getBookingById_(bookingId);
+  if (!b) throw new Error('Nem található foglalás');
+  if (b.status === 'cancelled') throw new Error('Már lemondva');
+  declineBooking_(b);
+  return { ok: true };
+}
+
+function htmlResult_(title, message, ok) {
+  const color = ok ? '#6f8a5f' : '#b25b53';
+  const icon = ok
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="#6f8a5f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="44" height="44"><path d="M20 6L9 17l-5-5"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="#b25b53" stroke-width="3" stroke-linecap="round" width="44" height="44"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+  const html =
+    '<!DOCTYPE html><html lang="hu"><head><meta charset="UTF-8"><title>' + title + '</title>' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1"/>' +
+    '<style>body{margin:0;font-family:-apple-system,system-ui,sans-serif;background:#fafaf8;color:#2a2826;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}' +
+    '.card{background:#fff;border:1px solid #e9e6e0;border-radius:6px;padding:48px 40px;max-width:440px;width:100%;text-align:center;box-shadow:0 8px 30px -10px rgba(42,40,38,0.1)}' +
+    '.ico{margin-bottom:18px}' +
+    'h1{font-size:24px;font-weight:600;margin:0 0 12px;color:' + color + '}' +
+    'p{color:#5a5856;font-size:15px;line-height:1.6;margin:0 0 24px}' +
+    '.b{display:inline-block;background:#2a2826;color:#fff;padding:11px 22px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-decoration:none;border-radius:3px;text-transform:uppercase}' +
+    '.b:hover{background:#8e7048}</style></head><body><div class="card"><div class="ico">' + icon + '</div>' +
+    '<h1>' + title + '</h1><p>' + message + '</p>' +
+    '<a class="b" href="' + webAppUrl_() + '?admin">Admin megnyitása</a>' +
+    '</div></body></html>';
+  return HtmlService.createHtmlOutput(html)
+    .setTitle(title)
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function sendOwnerActionEmail_(b, bookingId) {
+  const dateLabel = formatDateHu_(b.date) + ' · ' + b.time;
+  const baseUrl = webAppUrl_();
+  const tokenApprove = actionToken_(bookingId, 'approve');
+  const tokenDecline = actionToken_(bookingId, 'decline');
+  const approveUrl = baseUrl + '?action=approve&id=' + encodeURIComponent(bookingId) + '&t=' + tokenApprove;
+  const declineUrl = baseUrl + '?action=decline&id=' + encodeURIComponent(bookingId) + '&t=' + tokenDecline;
+
+  const subject = '⏳ Új foglalás vár jóváhagyásra · ' + b.serviceName + ' · ' + b.date + ' ' + b.time;
+  const html =
+    '<div style="font-family:Georgia,serif;color:#2a2826;max-width:520px;margin:0 auto;padding:24px;background:#fafaf8;">' +
+    '<div style="text-align:center;font-size:11px;letter-spacing:0.22em;color:#b8956b;text-transform:uppercase;font-weight:600;margin-bottom:16px;">✿ ' + CONFIG.businessName + ' ✿</div>' +
+    '<h1 style="font-family:Georgia,serif;font-weight:400;font-size:24px;color:#2a2826;margin:0 0 8px;">Új foglalás vár jóváhagyásra</h1>' +
+    '<p style="color:#5a5856;font-size:14px;margin:0 0 20px;">Egy vendég foglalt időpontot. Kérlek nézd át, és kattints az egyik gombra alább.</p>' +
+
+    '<table style="width:100%;background:#fff;border-radius:4px;padding:20px;border-collapse:collapse;margin-bottom:24px;">' +
+    '<tr><td style="padding:6px 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8782;">Vendég</td><td style="padding:6px 0;text-align:right;font-size:15px;"><b>' + escapeHtml_(b.name) + '</b></td></tr>' +
+    '<tr><td style="padding:6px 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8782;border-top:1px solid #f1efe9;">Telefon</td><td style="padding:6px 0;text-align:right;font-size:15px;border-top:1px solid #f1efe9;"><a style="color:#8e7048;text-decoration:none;" href="tel:' + escapeHtml_(b.phone) + '">' + escapeHtml_(b.phone || '—') + '</a></td></tr>' +
+    '<tr><td style="padding:6px 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8782;border-top:1px solid #f1efe9;">E-mail</td><td style="padding:6px 0;text-align:right;font-size:15px;border-top:1px solid #f1efe9;"><a style="color:#8e7048;text-decoration:none;" href="mailto:' + escapeHtml_(b.email) + '">' + escapeHtml_(b.email) + '</a></td></tr>' +
+    '<tr><td style="padding:6px 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8782;border-top:1px solid #f1efe9;">Szolgáltatás</td><td style="padding:6px 0;text-align:right;font-size:15px;border-top:1px solid #f1efe9;">' + escapeHtml_(b.serviceName || '') + '</td></tr>' +
+    '<tr><td style="padding:6px 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8782;border-top:1px solid #f1efe9;">Időpont</td><td style="padding:6px 0;text-align:right;font-size:15px;border-top:1px solid #f1efe9;"><b>' + dateLabel + '</b></td></tr>' +
+    '<tr><td style="padding:6px 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8782;border-top:1px solid #f1efe9;">Foglalási szám</td><td style="padding:6px 0;text-align:right;font-size:13px;color:#8a8782;border-top:1px solid #f1efe9;">' + bookingId + '</td></tr>' +
+    (b.note ? '<tr><td colspan="2" style="padding:14px 0 0;color:#8a8782;font-style:italic;font-size:14px;border-top:1px solid #f1efe9;margin-top:8px;">"<i>' + escapeHtml_(b.note) + '</i>"</td></tr>' : '') +
+    '</table>' +
+
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;"><tr>' +
+    '<td style="width:50%;padding-right:6px;">' +
+      '<a href="' + approveUrl + '" style="display:block;background:#6f8a5f;color:#fff;text-decoration:none;text-align:center;padding:16px 8px;font-family:-apple-system,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;border-radius:3px;">✓ Elfogadás</a>' +
+    '</td>' +
+    '<td style="width:50%;padding-left:6px;">' +
+      '<a href="' + declineUrl + '" style="display:block;background:#b25b53;color:#fff;text-decoration:none;text-align:center;padding:16px 8px;font-family:-apple-system,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;border-radius:3px;">✕ Elutasítás</a>' +
+    '</td></tr></table>' +
+
+    '<p style="font-size:12px;color:#8a8782;font-style:italic;text-align:center;margin:0;">Az idősáv addig is foglalva van — más nem tudja lefoglalni amíg nem döntesz.</p>' +
+    '</div>';
+
+  MailApp.sendEmail({
+    to: CONFIG.businessEmail,
+    subject: subject,
+    htmlBody: html,
+    name: CONFIG.businessName + ' (auto)',
+    replyTo: b.email || CONFIG.businessEmail
+  });
+}
+
+function sendApprovedClientEmail_(b) {
+  const dateLabel = formatDateHu_(b.date) + ' · ' + b.time;
+  const subject = CONFIG.businessName + ' — Foglalás visszaigazolva ✓';
+  const html =
+    '<div style="font-family:Georgia,serif;color:#2a2826;max-width:520px;margin:0 auto;padding:32px;background:#fafaf8;">' +
+    '<div style="text-align:center;font-size:11px;letter-spacing:0.22em;color:#b8956b;text-transform:uppercase;font-weight:600;margin-bottom:20px;">✿ ' + CONFIG.businessName + ' ✿</div>' +
+    '<h1 style="font-family:Georgia,serif;font-weight:300;font-size:26px;color:#2a2826;margin:0 0 12px;">Foglalásod <b>visszaigazolva</b>, ' + escapeHtml_(b.name) + '.</h1>' +
+    '<p style="color:#5a5856;font-size:15px;line-height:1.65;margin:0 0 24px;">Várlak a stúdióban — itt vannak az időpontod részletei:</p>' +
+    '<table style="width:100%;background:#fff;border-radius:4px;padding:20px;border-collapse:collapse;border:1px solid #e9e6e0;">' +
+    '<tr><td style="padding:8px 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8782;">Szolgáltatás</td><td style="padding:8px 0;text-align:right;font-family:Georgia,serif;font-size:16px;color:#2a2826;">' + escapeHtml_(b.serviceName || '') + '</td></tr>' +
+    '<tr><td style="padding:8px 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8782;border-top:1px solid #f1efe9;">Időpont</td><td style="padding:8px 0;text-align:right;font-family:Georgia,serif;font-size:16px;color:#2a2826;border-top:1px solid #f1efe9;"><b>' + dateLabel + '</b></td></tr>' +
+    '<tr><td style="padding:8px 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8782;border-top:1px solid #f1efe9;">Foglalási szám</td><td style="padding:8px 0;text-align:right;font-family:Georgia,serif;font-size:14px;color:#8a8782;border-top:1px solid #f1efe9;">' + escapeHtml_(b.bookingId) + '</td></tr>' +
+    '</table>' +
+    '<p style="font-size:14px;line-height:1.7;color:#5a5856;margin:24px 0 0;">Cím: 1143 Budapest, Gizella út 35. II. emelet.<br/>Ha bármi miatt nem tudsz jönni, kérlek hívj: <a style="color:#8e7048;" href="tel:' + CONFIG.businessPhone + '">' + CONFIG.businessPhone + '</a>.</p>' +
+    '<p style="font-size:13px;color:#8a8782;margin:24px 0 0;font-style:italic;">— Alice</p>' +
+    '</div>';
+  MailApp.sendEmail({ to: b.email, subject: subject, htmlBody: html, name: CONFIG.businessName, replyTo: CONFIG.businessEmail });
+}
+
+function sendDeclinedClientEmail_(b) {
+  const dateLabel = formatDateHu_(b.date) + ' · ' + b.time;
+  const subject = CONFIG.businessName + ' — Foglalás visszautasítva';
+  const html =
+    '<div style="font-family:Georgia,serif;color:#2a2826;max-width:520px;margin:0 auto;padding:32px;background:#fafaf8;">' +
+    '<div style="text-align:center;font-size:11px;letter-spacing:0.22em;color:#b8956b;text-transform:uppercase;font-weight:600;margin-bottom:20px;">✿ ' + CONFIG.businessName + ' ✿</div>' +
+    '<h1 style="font-family:Georgia,serif;font-weight:300;font-size:26px;color:#2a2826;margin:0 0 12px;">Kedves <b>' + escapeHtml_(b.name) + '</b>,</h1>' +
+    '<p style="color:#5a5856;font-size:15px;line-height:1.65;margin:0 0 16px;">Sajnálom, de a következő időpontot nem tudom elvállalni:</p>' +
+    '<table style="width:100%;background:#fff;border-radius:4px;padding:16px 20px;border-collapse:collapse;border:1px solid #e9e6e0;margin-bottom:24px;">' +
+    '<tr><td style="padding:6px 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8782;">Szolgáltatás</td><td style="padding:6px 0;text-align:right;font-size:15px;color:#2a2826;">' + escapeHtml_(b.serviceName || '') + '</td></tr>' +
+    '<tr><td style="padding:6px 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8782;border-top:1px solid #f1efe9;">Igényelt időpont</td><td style="padding:6px 0;text-align:right;font-size:15px;color:#2a2826;text-decoration:line-through;border-top:1px solid #f1efe9;">' + dateLabel + '</td></tr>' +
+    '</table>' +
+    '<p style="font-size:14px;line-height:1.7;color:#5a5856;margin:0 0 16px;">Találjunk egy másik időpontot! Kérlek nézz vissza a foglalóra egy szabad nappal, vagy keress közvetlenül:</p>' +
+    '<p style="font-size:14px;line-height:1.7;color:#2a2826;margin:0 0 24px;">📞 <a style="color:#8e7048;font-weight:600;" href="tel:' + CONFIG.businessPhone + '">' + CONFIG.businessPhone + '</a><br/>📧 <a style="color:#8e7048;font-weight:600;" href="mailto:' + CONFIG.businessEmail + '">' + CONFIG.businessEmail + '</a></p>' +
+    '<p style="font-size:13px;color:#8a8782;margin:0;font-style:italic;">Elnézést a kellemetlenségért.<br/>— Alice</p>' +
+    '</div>';
+  MailApp.sendEmail({ to: b.email, subject: subject, htmlBody: html, name: CONFIG.businessName, replyTo: CONFIG.businessEmail });
+}
+
+// ============== EMAIL (legacy auto-confirm) ==============
 
 function sendEmails_(b, bookingId) {
   const subjectClient = CONFIG.businessName + ' — Foglalás visszaigazolás';

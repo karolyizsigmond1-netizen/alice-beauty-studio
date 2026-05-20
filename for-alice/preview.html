@@ -2558,6 +2558,7 @@ body.abk-locked { overflow: hidden; }
       state.submitting = false;
       state.bookingId = res.bookingId;
       state.emailWarning = res.emailWarning;
+      state.bookingStatus = res.status || 'confirmed';
       bustCache();
       renderSummary();
       setStep(5);
@@ -2579,9 +2580,13 @@ body.abk-locked { overflow: hidden; }
       d.innerHTML = '<dt>' + r[0] + '</dt><dd>' + escHtml(r[1]) + '</dd>';
       summaryEl.appendChild(d);
     });
-    confirmMsg.innerHTML = state.emailWarning
-      ? '⚠ A foglalás rögzítve, de az e-mail küldés sikertelen: ' + escHtml(state.emailWarning)
-      : 'Visszaigazoló e-mail úton a <b>' + escHtml(state.email) + '</b> címre.';
+    if (state.emailWarning) {
+      confirmMsg.innerHTML = '⚠ A foglalás rögzítve, de az e-mail küldés sikertelen: ' + escHtml(state.emailWarning);
+    } else if (state.bookingStatus === 'pending') {
+      confirmMsg.innerHTML = '⏳ A foglalásod <b>jóváhagyásra vár</b>. Amint Alice megerősíti, e-mailben értesítünk a <b>' + escHtml(state.email) + '</b> címen.';
+    } else {
+      confirmMsg.innerHTML = 'Visszaigazoló e-mail úton a <b>' + escHtml(state.email) + '</b> címre.';
+    }
   }
 
   function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>]/g, function(c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]; }); }
