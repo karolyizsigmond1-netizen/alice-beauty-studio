@@ -2624,14 +2624,9 @@ body.abk-locked { overflow: hidden; }
     }
   }, true);
 
-  var badge = document.createElement('button');
-  badge.id = 'abkBadge';
-  badge.innerHTML = '✿ Új online foglalás';
-  badge.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#2a2826;color:#fff;border:none;padding:14px 22px;border-radius:100px;font-family:Open Sans,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.04em;cursor:pointer;box-shadow:0 10px 30px -8px rgba(42,40,38,0.4);z-index:9999;transition:all 0.3s;';
-  badge.addEventListener('mouseenter', function() { badge.style.transform = 'translateY(-2px)'; badge.style.background = '#8e7048'; });
-  badge.addEventListener('mouseleave', function() { badge.style.transform = ''; badge.style.background = '#2a2826'; });
-  badge.addEventListener('click', openModal);
-  document.body.appendChild(badge);
+  // Floating badge removed by request — every existing "Időpontfoglalás" /
+  // Reservio link on the page already opens the booking modal via the
+  // document-level click interceptor above.
 })();
 </script>
 <!-- ====== END BOOKING WIDGET ====== -->

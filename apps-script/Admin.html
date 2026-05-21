@@ -255,8 +255,46 @@
   .day-footer { margin-top: 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
   .day-summary { font-size: 12px; color: var(--mute); font-family: 'Instrument Serif', serif; font-style: italic; }
 
+  /* BOOKINGS FILTERS */
+  .bk-filters {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 18px;
+    padding: 12px 16px;
+    background: var(--paper);
+    border: 1px solid var(--line-faint);
+    border-radius: 12px;
+  }
+  .bk-filters-label {
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--mute); font-weight: 500;
+  }
+  .bk-toggle {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    background: var(--blush);
+    border: 1px solid transparent;
+    cursor: pointer; user-select: none;
+    font-size: 12px; font-weight: 500; color: var(--mute);
+    transition: all 0.25s;
+  }
+  .bk-toggle input { display: none; }
+  .bk-toggle:hover { background: var(--blush-deep); color: var(--plum); }
+  .bk-toggle:has(input:checked) { background: var(--plum); color: var(--paper); border-color: var(--plum); }
+  /* Fallback for browsers without :has */
+  .bk-toggle.is-on { background: var(--plum); color: var(--paper); border-color: var(--plum); }
+
   /* BOOKINGS PANEL */
   .bookings-list { display: flex; flex-direction: column; gap: 10px; }
+  .booking-item.is-expired { opacity: 0.55; background: rgba(140,140,140,0.04); }
+  .booking-section-label {
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--mute); font-weight: 600;
+    padding: 12px 4px 4px;
+    border-top: 1px solid var(--line-faint);
+    margin-top: 8px;
+  }
+  .booking-section-label:first-child { border-top: none; margin-top: 0; padding-top: 0; }
   .booking-item {
     background: var(--paper); border: 1px solid var(--line-faint); border-radius: 12px; padding: 18px 22px;
     display: grid; grid-template-columns: auto 1fr auto; gap: 16px 24px; align-items: center;
@@ -594,6 +632,19 @@
         <h2>Foglalások</h2>
         <span class="stat" id="bkStat"></span>
       </div>
+
+      <div class="bk-filters">
+        <span class="bk-filters-label">Mutasd:</span>
+        <label class="bk-toggle">
+          <input type="checkbox" id="bkShowExpired"/>
+          <span>Lejárt időpontok</span>
+        </label>
+        <label class="bk-toggle">
+          <input type="checkbox" id="bkShowCancelled"/>
+          <span>Lemondott foglalások</span>
+        </label>
+      </div>
+
       <div class="bookings-list" id="bookingsList">
         <div class="loading">Betöltés...</div>
       </div>
@@ -1241,27 +1292,104 @@
     }).catch(function(e) { toast(e.message || 'Hiba', 'err'); });
   });
 
+  // ── BOOKINGS FILTERS (persisted) ──
+  var BK_FILTERS_KEY = 'aliceAdminBkFilters';
+  function readFilters() {
+    try { return JSON.parse(localStorage.getItem(BK_FILTERS_KEY) || '{}') || {}; } catch (e) { return {}; }
+  }
+  function writeFilters(f) {
+    try { localStorage.setItem(BK_FILTERS_KEY, JSON.stringify(f)); } catch (e) {}
+  }
+  function getFilters() {
+    var f = readFilters();
+    return { showExpired: !!f.showExpired, showCancelled: !!f.showCancelled };
+  }
+  // init checkbox state
+  (function initFilterUI() {
+    var f = getFilters();
+    var e = $('bkShowExpired'), c = $('bkShowCancelled');
+    if (e) {
+      e.checked = f.showExpired;
+      e.parentElement.classList.toggle('is-on', f.showExpired);
+      e.addEventListener('change', function() {
+        e.parentElement.classList.toggle('is-on', e.checked);
+        var cur = readFilters(); cur.showExpired = e.checked; writeFilters(cur);
+        renderBookings();
+      });
+    }
+    if (c) {
+      c.checked = f.showCancelled;
+      c.parentElement.classList.toggle('is-on', f.showCancelled);
+      c.addEventListener('change', function() {
+        c.parentElement.classList.toggle('is-on', c.checked);
+        var cur = readFilters(); cur.showCancelled = c.checked; writeFilters(cur);
+        renderBookings();
+      });
+    }
+  })();
+
   // ── BOOKINGS ──
   function renderBookings() {
     if (!state.bookings.length) {
       bookingsList.innerHTML = '<div class="empty-state">Még nincs foglalás. Amikor érkezik egy, itt fog megjelenni.</div>';
       return;
     }
-    bookingsList.innerHTML = '';
-    // Sort: pending first (most urgent), then confirmed, then cancelled
-    var sorted = state.bookings.slice().sort(function(a, b) {
-      var order = { pending: 0, confirmed: 1, cancelled: 2 };
-      var oa = order[a.status] != null ? order[a.status] : 3;
-      var ob = order[b.status] != null ? order[b.status] : 3;
-      if (oa !== ob) return oa - ob;
-      return (a.date + ' ' + a.time) < (b.date + ' ' + b.time) ? -1 : 1;
+    var filters = getFilters();
+    var nowKey = todayNowKey();
+
+    function isExpired(b) {
+      return (b.status === 'confirmed' || b.status === 'pending') && (b.date + ' ' + b.time) < nowKey;
+    }
+
+    // Apply filters
+    var filtered = state.bookings.filter(function(b) {
+      if (b.status === 'cancelled' && !filters.showCancelled) return false;
+      if (isExpired(b) && !filters.showExpired) return false;
+      return true;
     });
 
+    if (!filtered.length) {
+      bookingsList.innerHTML = '<div class="empty-state">A szűrőknek megfelelő foglalás nincs.<br/>Kapcsold be a fenti opciókat a régebbi vagy lemondott foglalások megjelenítéséhez.</div>';
+      return;
+    }
+
+    // Sort: pending first, then upcoming-confirmed (closest first),
+    // then expired (newest first), then cancelled (newest first)
+    function bucket(b) {
+      if (b.status === 'pending') return 0;
+      if (b.status === 'confirmed' && !isExpired(b)) return 1;
+      if (isExpired(b)) return 2;
+      return 3; // cancelled
+    }
+    var sorted = filtered.slice().sort(function(a, b) {
+      var ba = bucket(a), bb = bucket(b);
+      if (ba !== bb) return ba - bb;
+      var ka = a.date + ' ' + a.time, kb = b.date + ' ' + b.time;
+      // Upcoming → ascending (soonest first). Past → descending (most recent first).
+      if (ba <= 1) return ka < kb ? -1 : 1;
+      return ka > kb ? -1 : 1;
+    });
+
+    bookingsList.innerHTML = '';
+    var lastBucket = -1;
+    var bucketLabels = ['⏳ Jóváhagyásra vár', '📅 Soron következő', '🕓 Lejárt', '✕ Lemondott'];
+
     sorted.forEach(function(b) {
+      var bk = bucket(b);
+      if (bk !== lastBucket) {
+        var hdr = document.createElement('div');
+        hdr.className = 'booking-section-label';
+        hdr.textContent = bucketLabels[bk];
+        bookingsList.appendChild(hdr);
+        lastBucket = bk;
+      }
       var d = parseIso(b.date);
       var dayLabel = DAYS_HU[d.getDay()] + ', ' + MONTHS_HU[d.getMonth()] + ' ' + d.getDate() + '.';
       var item = document.createElement('div');
-      item.className = 'booking-item' + (b.status === 'pending' ? ' is-pending' : '');
+      var cls = 'booking-item';
+      if (b.status === 'pending') cls += ' is-pending';
+      if (bk === 2) cls += ' is-expired'; // visually dimmed
+      item.className = cls;
       var statusLabel = b.status === 'confirmed' ? 'Megerősítve'
         : b.status === 'cancelled' ? 'Lemondva'
         : b.status === 'pending' ? '⏳ Jóváhagyásra vár'
