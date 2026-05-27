@@ -868,6 +868,11 @@ function serveManagePage_(bookingId, token) {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
+// Public wrappers callable via google.script.run from the manage page.
+// (Underscore-suffix functions are private to the server.)
+function customerCancel(body) { return customerCancel_(body); }
+function customerReschedule(body) { return customerReschedule_(body); }
+
 /** POST handler: customer cancels their own booking with optional reason. */
 function customerCancel_(body) {
   const bookingId = String(body.id || '');

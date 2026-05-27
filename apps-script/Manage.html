@@ -256,28 +256,30 @@
     });
   });
 
-  // Robust POST: if the backend returned HTML instead of JSON (auth wall
-  // or old deploy that doesn't know cancelSelf/rescheduleSelf), surface a
-  // friendly error instead of the cryptic JSON-parse mess.
-  function safePost(payload) {
-    return fetch(BACKEND_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    }).then(function(r) {
-      return r.text().then(function(text) {
-        var trimmed = (text || '').trim();
-        if (!trimmed) throw new Error('Üres válasz a szervertől');
-        if (trimmed.charAt(0) === '<') {
-          throw new Error('A szerver elavult verziót szolgál — kérlek értesítsd a stúdiót: ' + '<?= businessPhone ?>');
-        }
-        var j;
-        try { j = JSON.parse(trimmed); }
-        catch (e) { throw new Error('Hibás válasz: ' + trimmed.substring(0, 80)); }
-        if (!j.ok) throw new Error(j.error || 'Ismeretlen hiba');
-        return j;
-      });
+  // Server call via google.script.run — proper Apps Script channel for
+  // HTML-page → server calls. No CORS, no cross-origin redirect issues,
+  // no JSON parsing — Apps Script handles serialization. Falls back to
+  // the underscore-suffixed function name if needed.
+  function callServer(fnName, payload) {
+    return new Promise(function(resolve, reject) {
+      if (!window.google || !google.script || !google.script.run) {
+        return reject(new Error('Ez az oldal csak a kapott e-mail linkről nyitható meg.'));
+      }
+      google.script.run
+        .withSuccessHandler(function(r) {
+          if (!r || r.ok === false) return reject(new Error((r && r.error) || 'Ismeretlen hiba'));
+          resolve(r);
+        })
+        .withFailureHandler(function(err) {
+          var msg = (err && err.message) || String(err) || 'Szerverhiba';
+          reject(new Error(msg));
+        })
+        [fnName](payload);
     });
+  }
+  function safePost(payload) {
+    var fn = payload.action === 'cancelSelf' ? 'customerCancel' : 'customerReschedule';
+    return callServer(fn, payload);
   }
 
   // ── Reschedule flow ──
