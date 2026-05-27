@@ -782,7 +782,18 @@
     calMonth.textContent = 'Betöltés...';
     bookingsList.innerHTML = '<div class="loading">Betöltés...</div>';
     allList.innerHTML = '<div class="empty-state">Betöltés...</div>';
-    run('adminGetState').then(function(s) {
+    // Auto-heal any orphan booked slots BEFORE loading state — that way the
+    // calendar that appears already reflects the cleaned-up data, not the
+    // ghost-occupied slots. Silent if nothing needs fixing.
+    run('adminRepairSlots', pw)
+      .catch(function() { return null; })  // never let repair errors block loading
+      .then(function(repair) {
+        if (repair && repair.total > 0) {
+          toast('Auto-javítás: ' + repair.total + ' időpont felszabadítva', 'ok');
+        }
+        return run('adminGetState');
+      })
+      .then(function(s) {
       if (!s) throw new Error('Üres válasz a szervertől — futtasd újra a setup-ot, vagy redeploy.');
       state.slots = (s && s.slots) || [];
       state.bookings = (s && s.bookings) || [];
