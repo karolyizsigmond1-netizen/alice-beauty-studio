@@ -869,9 +869,19 @@ function serveManagePage_(bookingId, token) {
 }
 
 // Public wrappers callable via google.script.run from the manage page.
-// (Underscore-suffix functions are private to the server.)
-function customerCancel(body) { return customerCancel_(body); }
-function customerReschedule(body) { return customerReschedule_(body); }
+// Defensive: validate input and log for debugging.
+function customerCancel(body) {
+  if (!body || typeof body !== 'object') {
+    throw new Error('customerCancel: missing payload (got ' + (typeof body) + '). Cannot be run manually from the editor — only via the manage page.');
+  }
+  return customerCancel_(body);
+}
+function customerReschedule(body) {
+  if (!body || typeof body !== 'object') {
+    throw new Error('customerReschedule: missing payload (got ' + (typeof body) + '). Cannot be run manually from the editor — only via the manage page.');
+  }
+  return customerReschedule_(body);
+}
 
 /** POST handler: customer cancels their own booking with optional reason. */
 function customerCancel_(body) {
