@@ -305,11 +305,24 @@
     renderRsCalendar();
   });
 
+  function safeGetJson(url) {
+    return fetch(url).then(function(r) {
+      return r.text().then(function(text) {
+        var trimmed = (text || '').trim();
+        if (!trimmed) throw new Error('Üres válasz');
+        if (trimmed.charAt(0) === '<') {
+          throw new Error('Elavult szerver — kérlek hívj: <?= businessPhone ?>');
+        }
+        try { return JSON.parse(trimmed); }
+        catch (e) { throw new Error('Hibás válasz a szervertől'); }
+      });
+    });
+  }
+
   function loadSlotsForReschedule() {
-    // Fetch available slots from the public endpoint
     Promise.all([
-      fetch(BACKEND_URL + '?action=slots').then(function(r) { return r.json(); }),
-      fetch(BACKEND_URL + '?action=services').then(function(r) { return r.json(); })
+      safeGetJson(BACKEND_URL + '?action=slots'),
+      safeGetJson(BACKEND_URL + '?action=services')
     ]).then(function(arr) {
       var slotsJ = arr[0], svcJ = arr[1];
       rs.slotsByDate = {};
@@ -317,12 +330,11 @@
         if (!rs.slotsByDate[s.date]) rs.slotsByDate[s.date] = [];
         rs.slotsByDate[s.date].push(s.time);
       });
-      // Find duration for the booked service
       var svc = (svcJ.services || []).filter(function(s) { return s.key === booking.service; })[0];
       if (svc) rs.durationMin = svc.durationMin || 60;
       renderRsCalendar();
     }).catch(function(e) {
-      rsGrid.innerHTML = '<div class="pick-empty">Hiba: ' + esc(e.message || 'nem tölthető') + '</div>';
+      rsGrid.innerHTML = '<div class="pick-empty" style="color:#b25b53;">' + esc(e.message || 'nem tölthető') + '</div>';
     });
   }
 
