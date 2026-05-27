@@ -1217,6 +1217,64 @@ function enableEmail() {
 }
 
 /**
+ * Heal orphan / stale slot rows:
+ *  - status='booked' + bookingId NOT in Bookings sheet → free it
+ *  - status='booked' + bookingId is a cancelled booking → free it
+ *  - status='booked' + empty bookingId → free it
+ * Returns counts of what was fixed. Safe to run as often as needed.
+ */
+function repairSlots() {
+  ensureSetup_();
+  const slotsSheet = sheet_(SHEET_SLOTS);
+  const bkSheet = sheet_(SHEET_BOOKINGS);
+
+  // Build a map of valid (non-cancelled) bookingId → status
+  const bkData = bkSheet.getDataRange().getValues();
+  const validBookings = {};
+  for (let i = 1; i < bkData.length; i++) {
+    const id = String(bkData[i][0] || '').trim();
+    const status = String(bkData[i][11] || '').trim();
+    if (id) validBookings[id] = status;
+  }
+
+  const slotData = slotsSheet.getDataRange().getValues();
+  let orphanFreed = 0, blankIdFreed = 0, cancelledFreed = 0;
+  for (let i = 1; i < slotData.length; i++) {
+    const status = String(slotData[i][2] || '').trim();
+    const bid = String(slotData[i][3] || '').trim();
+    if (status !== 'booked') continue;
+    // Manual blocks are intentional — leave them alone
+    if (bid === 'manual') continue;
+
+    let reason = null;
+    if (!bid) reason = 'blank-id';
+    else if (!validBookings[bid]) reason = 'orphan';
+    else if (validBookings[bid] === 'cancelled') reason = 'cancelled';
+
+    if (reason) {
+      slotsSheet.getRange(i + 1, 3).setValue('free');
+      slotsSheet.getRange(i + 1, 4).setValue('');
+      if (reason === 'orphan') orphanFreed++;
+      else if (reason === 'cancelled') cancelledFreed++;
+      else blankIdFreed++;
+    }
+  }
+  if (orphanFreed + cancelledFreed + blankIdFreed > 0) bustPublicCache_();
+  return {
+    ok: true,
+    orphanFreed: orphanFreed,
+    cancelledFreed: cancelledFreed,
+    blankIdFreed: blankIdFreed,
+    total: orphanFreed + cancelledFreed + blankIdFreed
+  };
+}
+
+function adminRepairSlots(password) {
+  if (!adminAuth(password)) throw new Error('Hibás jelszó');
+  return repairSlots();
+}
+
+/**
  * One-time cleanup: removes duplicate (date|time) rows from the Slots sheet,
  * keeping the row with the highest-priority status (booked > free).
  */

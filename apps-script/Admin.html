@@ -527,6 +527,7 @@
         </div>
         <div class="banner__actions">
           <button class="btn btn--big" id="autoFillBtn">✿ 30 nap automatikus feltöltése</button>
+          <button class="banner__secondary" id="repairBtn">naptár javítása (törölt foglalások felszabadítása)</button>
           <button class="banner__secondary" id="wipeBtn">vagy: összes jövőbeli időpont törlése</button>
         </div>
       </div>
@@ -1079,6 +1080,27 @@
       autoFillBtn.disabled = false;
       toast(e.message || 'Hiba', 'err');
       updateBanner();
+    });
+  });
+
+  $('repairBtn').addEventListener('click', function() {
+    var btn = $('repairBtn');
+    btn.disabled = true; var orig = btn.textContent; btn.textContent = 'Ellenőrzés...';
+    run('adminRepairSlots', pw).then(function(r) {
+      btn.disabled = false; btn.textContent = orig;
+      if (r.total === 0) {
+        toast('✓ Minden rendben — nincs javítandó.', 'ok');
+      } else {
+        var parts = [];
+        if (r.orphanFreed) parts.push(r.orphanFreed + ' árva (nem létező foglalás)');
+        if (r.cancelledFreed) parts.push(r.cancelledFreed + ' lemondott');
+        if (r.blankIdFreed) parts.push(r.blankIdFreed + ' üres ID');
+        toast('✿ ' + r.total + ' időpont felszabadítva — ' + parts.join(', '), 'ok');
+        loadAll();
+      }
+    }).catch(function(e) {
+      btn.disabled = false; btn.textContent = orig;
+      toast(e.message || 'Hiba', 'err');
     });
   });
 
