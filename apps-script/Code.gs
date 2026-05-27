@@ -81,6 +81,11 @@ function doGet(e) {
     return ownerActionResponse_(action, p.id, p.t);
   }
 
+  // Customer self-service: GET the manage page (cancel / reschedule)
+  if (action === 'manage') {
+    return serveManagePage_(p.id, p.t);
+  }
+
   return jsonOk_({ ok: true, service: 'alice-booking', version: '1.0' });
 }
 
@@ -91,6 +96,12 @@ function doPost(e) {
 
     if (action === 'book') {
       return jsonOk_(createBooking_(body));
+    }
+    if (action === 'cancelself') {
+      return jsonOk_(customerCancel_(body));
+    }
+    if (action === 'rescheduleself') {
+      return jsonOk_(customerReschedule_(body));
     }
     return jsonErr_('Unknown action');
   } catch (err) {
@@ -778,7 +789,8 @@ function sendApprovedClientEmail_(b) {
     '<tr><td style="padding:8px 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8782;border-top:1px solid #f1efe9;">Időpont</td><td style="padding:8px 0;text-align:right;font-family:Georgia,serif;font-size:16px;color:#2a2826;border-top:1px solid #f1efe9;"><b>' + dateLabel + '</b></td></tr>' +
     '<tr><td style="padding:8px 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8782;border-top:1px solid #f1efe9;">Foglalási szám</td><td style="padding:8px 0;text-align:right;font-family:Georgia,serif;font-size:14px;color:#8a8782;border-top:1px solid #f1efe9;">' + escapeHtml_(b.bookingId) + '</td></tr>' +
     '</table>' +
-    '<p style="font-size:14px;line-height:1.7;color:#5a5856;margin:24px 0 0;">Cím: 1143 Budapest, Gizella út 35. II. emelet.<br/>Ha bármi miatt nem tudsz jönni, kérlek hívj: <a style="color:#8e7048;" href="tel:' + CONFIG.businessPhone + '">' + CONFIG.businessPhone + '</a>.</p>' +
+    '<p style="font-size:14px;line-height:1.7;color:#5a5856;margin:24px 0 16px;">Cím: 1143 Budapest, Gizella út 35. II. emelet.<br/>Ha bármi miatt nem tudsz jönni, kérlek hívj: <a style="color:#8e7048;" href="tel:' + CONFIG.businessPhone + '">' + CONFIG.businessPhone + '</a>.</p>' +
+    '<div style="text-align:center;margin:24px 0;"><a href="' + manageUrl_(b.bookingId) + '" style="display:inline-block;padding:12px 24px;background:#fafaf8;border:1px solid #2a2826;color:#2a2826;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;border-radius:3px;">Foglalás kezelése</a><br/><span style="font-size:11px;color:#8a8782;font-style:italic;display:inline-block;margin-top:6px;">lemondás vagy időpont-módosítás</span></div>' +
     '<p style="font-size:13px;color:#8a8782;margin:24px 0 0;font-style:italic;">— Alice</p>' +
     '</div>';
   MailApp.sendEmail({ to: b.email, subject: subject, htmlBody: html, name: CONFIG.businessName, replyTo: CONFIG.businessEmail });
@@ -799,6 +811,329 @@ function sendDeclinedClientEmail_(b) {
     '<p style="font-size:14px;line-height:1.7;color:#5a5856;margin:0 0 16px;">Találjunk egy másik időpontot! Kérlek nézz vissza a foglalóra egy szabad nappal, vagy keress közvetlenül:</p>' +
     '<p style="font-size:14px;line-height:1.7;color:#2a2826;margin:0 0 24px;">📞 <a style="color:#8e7048;font-weight:600;" href="tel:' + CONFIG.businessPhone + '">' + CONFIG.businessPhone + '</a><br/>📧 <a style="color:#8e7048;font-weight:600;" href="mailto:' + CONFIG.businessEmail + '">' + CONFIG.businessEmail + '</a></p>' +
     '<p style="font-size:13px;color:#8a8782;margin:0;font-style:italic;">Elnézést a kellemetlenségért.<br/>— Alice</p>' +
+    '</div>';
+  MailApp.sendEmail({ to: b.email, subject: subject, htmlBody: html, name: CONFIG.businessName, replyTo: CONFIG.businessEmail });
+}
+
+// ============== CUSTOMER SELF-SERVICE ==============
+
+const SELF_SERVICE_CUTOFF_HOURS = 24;
+
+function customerToken_(bookingId) {
+  const sig = Utilities.computeHmacSha256Signature(bookingId + ':manage', getActionSecret_());
+  return Utilities.base64EncodeWebSafe(sig).substring(0, 16);
+}
+function manageUrl_(bookingId) {
+  return webAppUrl_() + '?action=manage&id=' + encodeURIComponent(bookingId) + '&t=' + customerToken_(bookingId);
+}
+
+/** Hours from now until the appointment. Negative if already past. */
+function hoursUntil_(b) {
+  const apt = new Date(b.date + 'T' + b.time + ':00');
+  return (apt.getTime() - Date.now()) / (60 * 60 * 1000);
+}
+
+/** Serve the customer-facing manage page (HTML). */
+function serveManagePage_(bookingId, token) {
+  if (!bookingId || customerToken_(bookingId) !== token) {
+    return htmlResult_('Érvénytelen link', 'Ez a foglalás-kezelő link érvénytelen vagy lejárt.', false);
+  }
+  const b = getBookingById_(bookingId);
+  if (!b) return htmlResult_('Nincs ilyen foglalás', 'A foglalás nem található.', false);
+
+  const tpl = HtmlService.createTemplateFromFile('Manage');
+  tpl.bookingJson = JSON.stringify({
+    bookingId: b.bookingId,
+    date: b.date,
+    time: b.time,
+    serviceName: b.serviceName,
+    serviceMeta: b.serviceMeta,
+    service: b.service,
+    name: b.name,
+    phone: b.phone,
+    email: b.email,
+    status: b.status,
+    note: b.note,
+    dateLabel: formatDateHu_(b.date) + ' · ' + b.time,
+    hoursUntil: hoursUntil_(b),
+    cutoffHours: SELF_SERVICE_CUTOFF_HOURS
+  });
+  tpl.businessName = CONFIG.businessName;
+  tpl.businessPhone = CONFIG.businessPhone;
+  tpl.backendUrl = webAppUrl_();
+  tpl.token = token;
+  return tpl.evaluate()
+    .setTitle('Foglalás kezelése · ' + CONFIG.businessName)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/** POST handler: customer cancels their own booking with optional reason. */
+function customerCancel_(body) {
+  const bookingId = String(body.id || '');
+  const token = String(body.t || '');
+  if (customerToken_(bookingId) !== token) throw new Error('Érvénytelen link');
+  const b = getBookingById_(bookingId);
+  if (!b) throw new Error('Foglalás nem található');
+  if (b.status === 'cancelled') throw new Error('Ez a foglalás már le van mondva');
+  if (hoursUntil_(b) < SELF_SERVICE_CUTOFF_HOURS) {
+    throw new Error('Az időpont 24 órán belül van — kérlek hívd a stúdiót: ' + CONFIG.businessPhone);
+  }
+
+  const reason = String(body.reason || '').trim();
+
+  // Free slots
+  const sh = sheet_(SHEET_SLOTS);
+  const data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][3]) === bookingId) {
+      sh.getRange(i + 1, 3).setValue('free');
+      sh.getRange(i + 1, 4).setValue('');
+    }
+  }
+  // Mark cancelled + append reason to note column
+  const bk = sheet_(SHEET_BOOKINGS);
+  bk.getRange(b.row, 12).setValue('cancelled');
+  if (reason) {
+    const newNote = (b.note ? b.note + '\n' : '') + '[Vendég lemondás oka: ' + reason + ']';
+    bk.getRange(b.row, 11).setValue(newNote);
+    b.cancelReason = reason;
+  }
+  bustPublicCache_();
+
+  // Notify owner + send confirmation to customer
+  try { sendCancellationToOwner_(b, reason); } catch (e) { Logger.log('Owner cancel email failed: ' + e.message); }
+  try { sendCustomerCancelConfirm_(b); } catch (e) { Logger.log('Customer cancel email failed: ' + e.message); }
+  return { ok: true };
+}
+
+/**
+ * POST handler: customer reschedules their booking to a new date/time.
+ * The new booking goes back to 'pending' for Alice to approve (same as a fresh
+ * booking would). Old slots freed immediately.
+ */
+function customerReschedule_(body) {
+  const bookingId = String(body.id || '');
+  const token = String(body.t || '');
+  if (customerToken_(bookingId) !== token) throw new Error('Érvénytelen link');
+  const b = getBookingById_(bookingId);
+  if (!b) throw new Error('Foglalás nem található');
+  if (b.status === 'cancelled') throw new Error('Lemondott foglalás nem módosítható');
+  if (hoursUntil_(b) < SELF_SERVICE_CUTOFF_HOURS) {
+    throw new Error('Az időpont 24 órán belül van — kérlek hívd a stúdiót: ' + CONFIG.businessPhone);
+  }
+
+  const newDate = String(body.date || '');
+  const newTime = String(body.time || '');
+  if (!newDate || !newTime) throw new Error('Hiányzó új dátum vagy idő');
+  if (newDate === b.date && newTime === b.time) throw new Error('Az új időpont megegyezik a régivel');
+
+  // Find service duration
+  let durationMin = 60;
+  if (b.service) {
+    const svcs = getServices_();
+    const svc = svcs.filter(function(s) { return s.key === b.service; })[0];
+    if (svc) durationMin = svc.durationMin;
+  }
+  const slotsNeeded = Math.ceil(durationMin / SLOT_GRANULARITY_MIN);
+  const expectedTimes = consecutiveTimes_(newTime, slotsNeeded);
+
+  // Verify new slots are free
+  const sh = sheet_(SHEET_SLOTS);
+  const data = sh.getDataRange().getValues();
+  const rowByTime = {};
+  for (let i = 1; i < data.length; i++) {
+    if (asDateStr_(data[i][0]) !== newDate) continue;
+    rowByTime[asTimeStr_(data[i][1])] = { row: i + 1, status: String(data[i][2]), bookingId: String(data[i][3] || '') };
+  }
+  for (let k = 0; k < expectedTimes.length; k++) {
+    const t = expectedTimes[k];
+    const r = rowByTime[t];
+    if (!r) throw new Error('Az új időpontnak nem létezik idősávja: ' + t);
+    // Allow reuse of the same booking's own slots in case it's same day
+    if (r.status !== 'free' && r.bookingId !== bookingId) {
+      throw new Error('Az új időpont egy része már foglalt: ' + t);
+    }
+  }
+
+  // Free old slots
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][3]) === bookingId) {
+      sh.getRange(i + 1, 3).setValue('free');
+      sh.getRange(i + 1, 4).setValue('');
+    }
+  }
+  // Mark new slots booked with same bookingId
+  expectedTimes.forEach(function(t) {
+    const r = rowByTime[t];
+    sh.getRange(r.row, 3).setValue('booked');
+    sh.getRange(r.row, 4).setValue(bookingId);
+  });
+
+  // Update booking record: new date/time + back to pending
+  const bk = sheet_(SHEET_BOOKINGS);
+  bk.getRange(b.row, 3).setValue(newDate);
+  bk.getRange(b.row, 4).setValue(newTime);
+  bk.getRange(b.row, 12).setValue('pending');
+  bustPublicCache_();
+
+  // Build a refreshed record for emails
+  const refreshed = Object.assign({}, b, { date: newDate, time: newTime, status: 'pending' });
+  try { sendRescheduleToOwner_(refreshed, b.date, b.time); } catch (e) { Logger.log('Owner reschedule email failed: ' + e.message); }
+  try { sendCustomerRescheduleAck_(refreshed); } catch (e) { Logger.log('Customer reschedule email failed: ' + e.message); }
+  return { ok: true };
+}
+
+function sendCancellationToOwner_(b, reason) {
+  const dateLabel = formatDateHu_(b.date) + ' · ' + b.time;
+  const subject = '✕ Vendég lemondás · ' + (b.serviceName || '') + ' · ' + b.date + ' ' + b.time;
+  const html =
+    '<div style="font-family:Georgia,serif;color:#2a2826;max-width:520px;margin:0 auto;padding:24px;">' +
+    '<h2 style="margin:0 0 14px;color:#b25b53;">✕ Vendég lemondta a foglalását</h2>' +
+    '<p style="color:#5a5856;font-size:14px;margin:0 0 16px;">Az idősáv újra szabad — más vendég már le tudja foglalni.</p>' +
+    '<table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e9e6e0;border-radius:4px;padding:16px;">' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;">Vendég</td><td style="padding:6px 0;text-align:right;font-size:15px;"><b>' + escapeHtml_(b.name) + '</b></td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;border-top:1px solid #f1efe9;">Telefon</td><td style="padding:6px 0;text-align:right;font-size:15px;border-top:1px solid #f1efe9;"><a style="color:#8e7048;text-decoration:none;" href="tel:' + escapeHtml_(b.phone) + '">' + escapeHtml_(b.phone || '—') + '</a></td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;border-top:1px solid #f1efe9;">Szolgáltatás</td><td style="padding:6px 0;text-align:right;font-size:15px;border-top:1px solid #f1efe9;">' + escapeHtml_(b.serviceName || '') + '</td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;border-top:1px solid #f1efe9;">Lemondott időpont</td><td style="padding:6px 0;text-align:right;font-size:15px;text-decoration:line-through;border-top:1px solid #f1efe9;">' + dateLabel + '</td></tr>' +
+    '</table>' +
+    (reason ? '<div style="margin-top:18px;padding:16px;background:#f4ede0;border-radius:4px;"><div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8e7048;margin-bottom:6px;font-weight:600;">Indoklás a vendégtől</div><div style="font-size:14px;color:#2a2826;font-style:italic;line-height:1.5;">"' + escapeHtml_(reason) + '"</div></div>' : '') +
+    '</div>';
+  MailApp.sendEmail({ to: CONFIG.businessEmail, subject: subject, htmlBody: html, name: CONFIG.businessName + ' (auto)', replyTo: b.email || CONFIG.businessEmail });
+}
+
+function sendCustomerCancelConfirm_(b) {
+  const dateLabel = formatDateHu_(b.date) + ' · ' + b.time;
+  const html =
+    '<div style="font-family:Georgia,serif;color:#2a2826;max-width:520px;margin:0 auto;padding:32px;background:#fafaf8;">' +
+    '<div style="text-align:center;font-size:11px;letter-spacing:0.22em;color:#b8956b;text-transform:uppercase;font-weight:600;margin-bottom:20px;">✿ ' + CONFIG.businessName + ' ✿</div>' +
+    '<h1 style="font-family:Georgia,serif;font-weight:300;font-size:26px;margin:0 0 12px;">Foglalás lemondva, ' + escapeHtml_(b.name) + '.</h1>' +
+    '<p style="color:#5a5856;font-size:15px;line-height:1.65;margin:0 0 18px;">Köszönöm a jelzést! Az alábbi időpont visszavonásra került:</p>' +
+    '<table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e9e6e0;border-radius:4px;padding:16px 20px;">' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;">Szolgáltatás</td><td style="padding:6px 0;text-align:right;font-size:15px;">' + escapeHtml_(b.serviceName || '') + '</td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;border-top:1px solid #f1efe9;">Lemondott időpont</td><td style="padding:6px 0;text-align:right;font-size:15px;text-decoration:line-through;border-top:1px solid #f1efe9;">' + dateLabel + '</td></tr>' +
+    '</table>' +
+    '<p style="font-size:14px;line-height:1.7;color:#5a5856;margin:20px 0 0;">Ha új időpontot szeretnél, foglalj a weboldalon vagy keress: <a style="color:#8e7048;" href="tel:' + CONFIG.businessPhone + '">' + CONFIG.businessPhone + '</a></p>' +
+    '<p style="font-size:13px;color:#8a8782;margin:24px 0 0;font-style:italic;">— Alice</p>' +
+    '</div>';
+  MailApp.sendEmail({ to: b.email, subject: CONFIG.businessName + ' — Lemondás visszaigazolva', htmlBody: html, name: CONFIG.businessName, replyTo: CONFIG.businessEmail });
+}
+
+function sendRescheduleToOwner_(b, oldDate, oldTime) {
+  const newLabel = formatDateHu_(b.date) + ' · ' + b.time;
+  const oldLabel = formatDateHu_(oldDate) + ' · ' + oldTime;
+  const baseUrl = webAppUrl_();
+  const approveUrl = baseUrl + '?action=approve&id=' + encodeURIComponent(b.bookingId) + '&t=' + actionToken_(b.bookingId, 'approve');
+  const declineUrl = baseUrl + '?action=decline&id=' + encodeURIComponent(b.bookingId) + '&t=' + actionToken_(b.bookingId, 'decline');
+
+  const subject = '⟳ Időpont-módosítás · ' + b.serviceName + ' · ' + b.date + ' ' + b.time;
+  const html =
+    '<div style="font-family:Georgia,serif;color:#2a2826;max-width:520px;margin:0 auto;padding:24px;background:#fafaf8;">' +
+    '<h2 style="margin:0 0 8px;color:#8e7048;">⟳ Vendég módosított egy időpontot</h2>' +
+    '<p style="color:#5a5856;font-size:14px;margin:0 0 16px;">A foglalás vissza-állt <b>jóváhagyásra vár</b> állapotba — kérlek nézd át és fogadd el vagy utasítsd el.</p>' +
+    '<table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e9e6e0;border-radius:4px;padding:16px;margin-bottom:18px;">' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;">Vendég</td><td style="padding:6px 0;text-align:right;"><b>' + escapeHtml_(b.name) + '</b></td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;border-top:1px solid #f1efe9;">Telefon</td><td style="padding:6px 0;text-align:right;border-top:1px solid #f1efe9;">' + escapeHtml_(b.phone || '—') + '</td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;border-top:1px solid #f1efe9;">Szolgáltatás</td><td style="padding:6px 0;text-align:right;border-top:1px solid #f1efe9;">' + escapeHtml_(b.serviceName || '') + '</td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;border-top:1px solid #f1efe9;">Régi időpont</td><td style="padding:6px 0;text-align:right;text-decoration:line-through;color:#8a8782;border-top:1px solid #f1efe9;">' + oldLabel + '</td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;border-top:1px solid #f1efe9;">Új időpont</td><td style="padding:6px 0;text-align:right;border-top:1px solid #f1efe9;"><b>' + newLabel + '</b></td></tr>' +
+    '</table>' +
+    '<table style="width:100%;border-collapse:collapse;"><tr>' +
+    '<td style="width:50%;padding-right:6px;"><a href="' + approveUrl + '" style="display:block;background:#6f8a5f;color:#fff;text-decoration:none;text-align:center;padding:14px 8px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;border-radius:3px;">✓ Elfogadás</a></td>' +
+    '<td style="width:50%;padding-left:6px;"><a href="' + declineUrl + '" style="display:block;background:#b25b53;color:#fff;text-decoration:none;text-align:center;padding:14px 8px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;border-radius:3px;">✕ Elutasítás</a></td>' +
+    '</tr></table>' +
+    '</div>';
+  MailApp.sendEmail({ to: CONFIG.businessEmail, subject: subject, htmlBody: html, name: CONFIG.businessName + ' (auto)', replyTo: b.email || CONFIG.businessEmail });
+}
+
+function sendCustomerRescheduleAck_(b) {
+  const dateLabel = formatDateHu_(b.date) + ' · ' + b.time;
+  const html =
+    '<div style="font-family:Georgia,serif;color:#2a2826;max-width:520px;margin:0 auto;padding:32px;background:#fafaf8;">' +
+    '<div style="text-align:center;font-size:11px;letter-spacing:0.22em;color:#b8956b;text-transform:uppercase;font-weight:600;margin-bottom:20px;">✿ ' + CONFIG.businessName + ' ✿</div>' +
+    '<h1 style="font-family:Georgia,serif;font-weight:300;font-size:26px;margin:0 0 12px;">Időpont-módosítás <b>elküldve</b>.</h1>' +
+    '<p style="color:#5a5856;font-size:15px;line-height:1.65;margin:0 0 18px;">Új időpontodat megkaptam — Alice rövidesen jóváhagyja vagy jelzi ha nem alkalmas. Külön e-mailben értesítünk az eredményről.</p>' +
+    '<table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e9e6e0;border-radius:4px;padding:16px 20px;">' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;">Szolgáltatás</td><td style="padding:6px 0;text-align:right;font-size:15px;">' + escapeHtml_(b.serviceName || '') + '</td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;border-top:1px solid #f1efe9;">Új időpont</td><td style="padding:6px 0;text-align:right;font-size:15px;border-top:1px solid #f1efe9;"><b>' + dateLabel + '</b></td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;border-top:1px solid #f1efe9;">Állapot</td><td style="padding:6px 0;text-align:right;font-size:13px;color:#8e7048;border-top:1px solid #f1efe9;">⏳ Jóváhagyásra vár</td></tr>' +
+    '</table>' +
+    '<p style="font-size:13px;color:#8a8782;margin:24px 0 0;font-style:italic;">— Alice</p>' +
+    '</div>';
+  MailApp.sendEmail({ to: b.email, subject: CONFIG.businessName + ' — Időpont-módosítás elküldve', htmlBody: html, name: CONFIG.businessName, replyTo: CONFIG.businessEmail });
+}
+
+// ============== REMINDERS (daily trigger) ==============
+
+/** Run once from the editor: installs a daily trigger that fires at 9am Europe/Budapest. */
+function installReminders() {
+  // Remove any prior triggers of the same function to avoid duplicates
+  ScriptApp.getProjectTriggers().forEach(function(t) {
+    if (t.getHandlerFunction() === 'sendRemindersDaily') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('sendRemindersDaily')
+    .timeBased()
+    .atHour(9)
+    .everyDays(1)
+    .inTimezone(CONFIG.timezone)
+    .create();
+  return 'Reminder daily trigger installed (9:00 ' + CONFIG.timezone + ').';
+}
+
+/** Sends a friendly reminder to every confirmed booking happening tomorrow. */
+function sendRemindersDaily() {
+  const bk = sheet_(SHEET_BOOKINGS);
+  const data = bk.getDataRange().getValues();
+  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const tomorrowIso = Utilities.formatDate(tomorrow, CONFIG.timezone, 'yyyy-MM-dd');
+
+  let sent = 0;
+  for (let i = 1; i < data.length; i++) {
+    const status = String(data[i][11] || '');
+    if (status !== 'confirmed') continue;
+    const date = asDateStr_(data[i][2]);
+    if (date !== tomorrowIso) continue;
+    const noteCol = String(data[i][10] || '');
+    if (noteCol.indexOf('[reminder-sent]') >= 0) continue; // already sent
+
+    const b = {
+      bookingId:   String(data[i][0]),
+      date:        date,
+      time:        asTimeStr_(data[i][3]),
+      service:     String(data[i][4] || ''),
+      serviceName: String(data[i][5] || ''),
+      name:        String(data[i][7] || ''),
+      email:       String(data[i][9] || ''),
+      note:        noteCol,
+      row:         i + 1
+    };
+    try {
+      sendReminderEmail_(b);
+      bk.getRange(b.row, 11).setValue(noteCol + (noteCol ? '\n' : '') + '[reminder-sent]');
+      sent++;
+    } catch (e) {
+      Logger.log('Reminder failed for ' + b.bookingId + ': ' + e.message);
+    }
+  }
+  return 'Sent ' + sent + ' reminder(s).';
+}
+
+function sendReminderEmail_(b) {
+  const dateLabel = formatDateHu_(b.date) + ' · ' + b.time;
+  const subject = '✿ Emlékeztető — holnap várlak a stúdióban';
+  const html =
+    '<div style="font-family:Georgia,serif;color:#2a2826;max-width:520px;margin:0 auto;padding:32px;background:#fafaf8;">' +
+    '<div style="text-align:center;font-size:11px;letter-spacing:0.22em;color:#b8956b;text-transform:uppercase;font-weight:600;margin-bottom:20px;">✿ ' + CONFIG.businessName + ' ✿</div>' +
+    '<h1 style="font-family:Georgia,serif;font-weight:300;font-size:26px;margin:0 0 12px;">Holnap találkozunk, ' + escapeHtml_(b.name) + '!</h1>' +
+    '<p style="color:#5a5856;font-size:15px;line-height:1.65;margin:0 0 18px;">Csak egy gyors emlékeztető a holnapi időpontodról:</p>' +
+    '<table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e9e6e0;border-radius:4px;padding:16px 20px;">' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;">Szolgáltatás</td><td style="padding:6px 0;text-align:right;font-size:15px;">' + escapeHtml_(b.serviceName || '') + '</td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8a8782;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;border-top:1px solid #f1efe9;">Időpont</td><td style="padding:6px 0;text-align:right;font-size:15px;border-top:1px solid #f1efe9;"><b>' + dateLabel + '</b></td></tr>' +
+    '</table>' +
+    '<p style="font-size:14px;line-height:1.7;color:#5a5856;margin:20px 0 8px;">📍 1143 Budapest, Gizella út 35. II. emelet</p>' +
+    '<p style="font-size:14px;line-height:1.7;color:#5a5856;margin:0 0 24px;">Ha mégsem tudsz jönni, kérlek hívj: <a style="color:#8e7048;" href="tel:' + CONFIG.businessPhone + '">' + CONFIG.businessPhone + '</a></p>' +
+    '<div style="text-align:center;margin:24px 0;"><a href="' + manageUrl_(b.bookingId) + '" style="display:inline-block;padding:12px 24px;background:#fafaf8;border:1px solid #2a2826;color:#2a2826;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;border-radius:3px;">Foglalás kezelése</a></div>' +
+    '<p style="font-size:13px;color:#8a8782;margin:24px 0 0;font-style:italic;">— Alice</p>' +
     '</div>';
   MailApp.sendEmail({ to: b.email, subject: subject, htmlBody: html, name: CONFIG.businessName, replyTo: CONFIG.businessEmail });
 }

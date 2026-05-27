@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<title>Foglalás kezelése · <?= businessName ?></title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafaf8; --paper: #fff; --ink: #2a2826; --ink-soft: #5a5856; --ink-mute: #8a8782;
+    --line: #e9e6e0; --line-soft: #f1efe9; --gold: #b8956b; --gold-dark: #8e7048; --gold-soft: #f4ede0;
+    --ok: #6f8a5f; --bad: #b25b53; --warn: #c0852b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Open Sans', -apple-system, sans-serif;
+    color: var(--ink); background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .page { max-width: 560px; margin: 0 auto; padding: 40px 20px 60px; }
+  @media (max-width: 480px) { .page { padding: 24px 16px 40px; } }
+  .head { text-align: center; margin-bottom: 32px; }
+  .head .kicker {
+    display: inline-block; font-size: 11px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--gold); font-weight: 600; margin-bottom: 12px;
+  }
+  .head h1 { font-weight: 300; font-size: 28px; line-height: 1.2; letter-spacing: -0.01em; }
+  .head h1 strong { font-weight: 600; }
+  .div { width: 32px; height: 1px; background: var(--gold); margin: 16px auto 0; }
+
+  .card {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 6px;
+    box-shadow: 0 4px 20px rgba(42, 40, 38, 0.06);
+    padding: 28px; margin-bottom: 16px;
+  }
+  .summary dt {
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ink-mute); font-weight: 600; padding: 8px 0 4px;
+  }
+  .summary dt:first-child { padding-top: 0; }
+  .summary dd { font-size: 16px; color: var(--ink); padding-bottom: 10px; border-bottom: 1px solid var(--line-soft); }
+  .summary dd:last-child { border-bottom: none; padding-bottom: 0; }
+  .status-pill {
+    display: inline-block; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 100px; font-weight: 600;
+  }
+  .status-confirmed { background: rgba(111,138,95,0.18); color: #4a6541; }
+  .status-pending { background: rgba(192,133,43,0.18); color: var(--warn); }
+  .status-cancelled { background: rgba(140,140,140,0.18); color: #6e6e6e; }
+
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  @media (max-width: 480px) { .actions { grid-template-columns: 1fr; } }
+  .btn {
+    padding: 14px 18px; font-family: inherit; font-size: 13px; font-weight: 600;
+    letter-spacing: 0.08em; border-radius: 3px; border: 1px solid transparent;
+    cursor: pointer; text-transform: uppercase;
+    transition: all 0.3s; text-align: center;
+  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn--primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .btn--primary:hover:not(:disabled) { background: var(--gold-dark); border-color: var(--gold-dark); }
+  .btn--danger { background: var(--paper); color: var(--bad); border-color: var(--bad); }
+  .btn--danger:hover:not(:disabled) { background: var(--bad); color: #fff; }
+  .btn--ghost { background: transparent; color: var(--ink-soft); border-color: var(--line); }
+  .btn--ghost:hover:not(:disabled) { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .note {
+    padding: 14px 18px; border-radius: 4px; font-size: 13px;
+    line-height: 1.6; margin-bottom: 16px;
+  }
+  .note--warn { background: rgba(192,133,43,0.10); color: var(--warn); border: 1px solid rgba(192,133,43,0.3); }
+  .note--bad { background: rgba(178,91,83,0.10); color: var(--bad); border: 1px solid rgba(178,91,83,0.3); }
+  .note--ok { background: rgba(111,138,95,0.10); color: #4a6541; border: 1px solid rgba(111,138,95,0.3); }
+  .note a { color: inherit; font-weight: 600; }
+
+  /* INLINE PANES */
+  .pane { display: none; }
+  .pane.is-on { display: block; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .field label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mute); font-weight: 600; }
+  .field textarea {
+    padding: 12px 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 3px;
+    font-family: inherit; font-size: 14px; color: var(--ink); outline: none; resize: vertical;
+    transition: border-color 0.25s, background 0.25s; min-height: 80px;
+  }
+  .field textarea:focus { border-color: var(--gold); background: var(--paper); }
+
+  /* CALENDAR + TIME pickers */
+  .pick-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .pick-nav {
+    width: 30px; height: 30px; border: 1px solid var(--line); background: var(--paper);
+    border-radius: 50%; cursor: pointer; display: grid; place-items: center; color: var(--ink-soft);
+  }
+  .pick-nav:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .pick-nav svg { width: 14px; height: 14px; }
+  .pick-title { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .pick-dows { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-bottom: 4px; }
+  .pick-dows span { text-align: center; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-mute); padding: 6px 0; font-weight: 600; }
+  .pick-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; min-height: 168px; }
+  .pick-day {
+    aspect-ratio: 1; display: grid; place-items: center;
+    background: transparent; border: 1px solid transparent; border-radius: 3px;
+    font-size: 13px; color: var(--ink); cursor: pointer; font-family: inherit;
+    transition: all 0.2s;
+  }
+  .pick-day:hover:not(.is-empty):not(.is-disabled) { background: var(--gold-soft); border-color: var(--gold); }
+  .pick-day.is-empty { cursor: default; }
+  .pick-day.is-disabled { color: var(--line); cursor: not-allowed; }
+  .pick-day.is-today { font-weight: 700; color: var(--gold-dark); }
+  .pick-day.is-selected { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .pick-times { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 6px; }
+  .pick-time {
+    padding: 11px 6px; background: var(--paper); border: 1px solid var(--line); border-radius: 3px;
+    cursor: pointer; font-size: 13px; font-weight: 500; color: var(--ink); font-family: inherit;
+    transition: all 0.25s;
+  }
+  .pick-time:hover { border-color: var(--gold); background: var(--gold-soft); }
+  .pick-time.is-selected { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .pick-empty { grid-column: 1/-1; text-align: center; padding: 28px 16px; color: var(--ink-mute); font-size: 13px; }
+
+  .foot-text { text-align: center; font-size: 12px; color: var(--ink-mute); margin-top: 24px; }
+  .foot-text a { color: var(--gold-dark); text-decoration: none; font-weight: 600; }
+
+  .loading { text-align: center; padding: 24px; color: var(--ink-mute); font-size: 13px; font-style: italic; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="head">
+    <span class="kicker"><?= businessName ?></span>
+    <h1>Foglalás <strong>kezelése</strong></h1>
+    <div class="div"></div>
+  </header>
+
+  <div class="card" id="summaryCard">
+    <dl class="summary" id="summary"></dl>
+  </div>
+
+  <!-- LIVE MESSAGES -->
+  <div id="messages"></div>
+
+  <!-- MAIN ACTIONS -->
+  <div class="pane is-on" data-pane="main">
+    <div class="actions" id="mainActions"></div>
+  </div>
+
+  <!-- CANCEL PANE -->
+  <div class="pane" data-pane="cancel">
+    <div class="card">
+      <h3 style="font-size:18px;font-weight:600;margin-bottom:14px;">Foglalás lemondása</h3>
+      <div class="field">
+        <label>Indoklás <span style="text-transform:none;letter-spacing:0;color:#b4b1ac;font-weight:400;font-size:12px;margin-left:6px;">opcionális</span></label>
+        <textarea id="cancelReason" rows="3" placeholder="Pl. közbejött, sajnálom..."></textarea>
+      </div>
+      <div class="actions">
+        <button class="btn btn--ghost" type="button" id="cancelBack">← Vissza</button>
+        <button class="btn btn--danger" type="button" id="cancelConfirm">Foglalás lemondása</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESCHEDULE PANE -->
+  <div class="pane" data-pane="reschedule">
+    <div class="card">
+      <h3 style="font-size:18px;font-weight:600;margin-bottom:6px;">Új időpont választása</h3>
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:18px;">Válassz egy másik napot és időpontot. Alice jóváhagyását követően véglegesítjük.</p>
+
+      <div class="pick-head">
+        <button class="pick-nav" type="button" id="rsPrev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <div class="pick-title" id="rsMonth"></div>
+        <button class="pick-nav" type="button" id="rsNext"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></button>
+      </div>
+      <div class="pick-dows"><span>H</span><span>K</span><span>Sze</span><span>Cs</span><span>P</span><span>Szo</span><span>V</span></div>
+      <div class="pick-grid" id="rsGrid"><div class="pick-empty">Naptár betöltése...</div></div>
+
+      <div id="rsTimesWrap" style="display:none;margin-top:18px;">
+        <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-mute);font-weight:600;margin-bottom:10px;" id="rsTimesLabel">Válassz időpontot</div>
+        <div class="pick-times" id="rsTimes"></div>
+      </div>
+
+      <div class="actions" style="margin-top:18px;">
+        <button class="btn btn--ghost" type="button" id="rsBack">← Vissza</button>
+        <button class="btn btn--primary" type="button" id="rsConfirm" disabled>Új időpont megerősítése</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot-text">Más típusú segítségért: <a href="tel:<?= businessPhone ?>"><?= businessPhone ?></a></p>
+</div>
+
+<script>
+(function() {
+  var BACKEND_URL = <?= JSON.stringify(backendUrl) ?>;
+  var TOKEN = <?= JSON.stringify(token) ?>;
+  var booking = <?!= bookingJson ?>;
+  var MONTHS = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
+  var DAYS = ['Vasárnap','Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat'];
+
+  var summary = document.getElementById('summary');
+  var messages = document.getElementById('messages');
+  var mainActions = document.getElementById('mainActions');
+  var panes = document.querySelectorAll('.pane');
+
+  function showPane(name) {
+    panes.forEach(function(p) { p.classList.toggle('is-on', p.dataset.pane === name); });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Render summary ──
+  var statusLabel = { confirmed: 'Megerősítve', pending: 'Jóváhagyásra vár', cancelled: 'Lemondva' }[booking.status] || booking.status;
+  summary.innerHTML =
+    '<dt>Vendég</dt><dd>' + esc(booking.name) + '</dd>' +
+    '<dt>Szolgáltatás</dt><dd>' + esc(booking.serviceName || '') + '</dd>' +
+    '<dt>Időpont</dt><dd>' + esc(booking.dateLabel) + '</dd>' +
+    '<dt>Foglalási szám</dt><dd style="font-size:13px;color:var(--ink-mute);">' + esc(booking.bookingId) + '</dd>' +
+    '<dt>Állapot</dt><dd><span class="status-pill status-' + booking.status + '">' + esc(statusLabel) + '</span></dd>';
+
+  // ── Determine what actions are possible ──
+  var isCancelled = booking.status === 'cancelled';
+  var tooLate = booking.hoursUntil < booking.cutoffHours;
+
+  if (isCancelled) {
+    messages.innerHTML = '<div class="note note--bad">Ez a foglalás már le van mondva. Ha új időpontot szeretnél, foglalj a weboldalon.</div>';
+    mainActions.innerHTML = '';
+  } else if (tooLate) {
+    messages.innerHTML = '<div class="note note--warn">⚠ Ez az időpont kevesebb mint <b>' + booking.cutoffHours + ' órán</b> belül van — önállóan már nem módosítható. Kérlek hívd a stúdiót: <a href="tel:<?= businessPhone ?>"><?= businessPhone ?></a></div>';
+    mainActions.innerHTML = '';
+  } else {
+    mainActions.innerHTML =
+      '<button class="btn btn--primary" type="button" id="actReschedule">⟳ Új időpont</button>' +
+      '<button class="btn btn--danger" type="button" id="actCancel">✕ Lemondás</button>';
+    document.getElementById('actCancel').addEventListener('click', function() { showPane('cancel'); });
+    document.getElementById('actReschedule').addEventListener('click', function() { showPane('reschedule'); loadSlotsForReschedule(); });
+  }
+
+  // ── Cancel flow ──
+  document.getElementById('cancelBack').addEventListener('click', function() { showPane('main'); });
+  document.getElementById('cancelConfirm').addEventListener('click', function() {
+    var btn = this;
+    btn.disabled = true; btn.textContent = 'Lemondás folyamatban...';
+    var reason = document.getElementById('cancelReason').value.trim();
+    fetch(BACKEND_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'cancelSelf', id: booking.bookingId, t: TOKEN, reason: reason })
+    }).then(function(r) { return r.json(); }).then(function(j) {
+      if (!j.ok) throw new Error(j.error || 'Hiba');
+      booking.status = 'cancelled';
+      messages.innerHTML = '<div class="note note--ok">✓ Foglalásod sikeresen lemondva. Megerősítő e-mailt küldtem.</div>';
+      summary.querySelector('.status-pill').className = 'status-pill status-cancelled';
+      summary.querySelector('.status-pill').textContent = 'Lemondva';
+      mainActions.innerHTML = '';
+      showPane('main');
+    }).catch(function(e) {
+      btn.disabled = false; btn.textContent = 'Foglalás lemondása';
+      messages.innerHTML = '<div class="note note--bad">Hiba: ' + esc(e.message || 'Ismeretlen hiba') + '</div>';
+    });
+  });
+
+  // ── Reschedule flow ──
+  var rs = {
+    viewMonth: new Date(booking.date + 'T00:00:00'),
+    slotsByDate: {},
+    selectedDate: null,
+    selectedTime: null,
+    durationMin: 60
+  };
+  var rsGrid = document.getElementById('rsGrid');
+  var rsMonth = document.getElementById('rsMonth');
+  var rsTimesWrap = document.getElementById('rsTimesWrap');
+  var rsTimes = document.getElementById('rsTimes');
+  var rsTimesLabel = document.getElementById('rsTimesLabel');
+  var rsConfirm = document.getElementById('rsConfirm');
+
+  document.getElementById('rsBack').addEventListener('click', function() { showPane('main'); });
+  document.getElementById('rsPrev').addEventListener('click', function() {
+    rs.viewMonth = new Date(rs.viewMonth.getFullYear(), rs.viewMonth.getMonth() - 1, 1);
+    renderRsCalendar();
+  });
+  document.getElementById('rsNext').addEventListener('click', function() {
+    rs.viewMonth = new Date(rs.viewMonth.getFullYear(), rs.viewMonth.getMonth() + 1, 1);
+    renderRsCalendar();
+  });
+
+  function loadSlotsForReschedule() {
+    // Fetch available slots from the public endpoint
+    Promise.all([
+      fetch(BACKEND_URL + '?action=slots').then(function(r) { return r.json(); }),
+      fetch(BACKEND_URL + '?action=services').then(function(r) { return r.json(); })
+    ]).then(function(arr) {
+      var slotsJ = arr[0], svcJ = arr[1];
+      rs.slotsByDate = {};
+      (slotsJ.slots || []).forEach(function(s) {
+        if (!rs.slotsByDate[s.date]) rs.slotsByDate[s.date] = [];
+        rs.slotsByDate[s.date].push(s.time);
+      });
+      // Find duration for the booked service
+      var svc = (svcJ.services || []).filter(function(s) { return s.key === booking.service; })[0];
+      if (svc) rs.durationMin = svc.durationMin || 60;
+      renderRsCalendar();
+    }).catch(function(e) {
+      rsGrid.innerHTML = '<div class="pick-empty">Hiba: ' + esc(e.message || 'nem tölthető') + '</div>';
+    });
+  }
+
+  function isoDate(d) { return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2); }
+  function consecutiveTimes(start, n) {
+    var p = start.split(':'); var mins = parseInt(p[0],10)*60 + parseInt(p[1]||'0',10);
+    var out = [];
+    for (var i = 0; i < n; i++) { out.push(('0'+Math.floor(mins/60)).slice(-2)+':'+('0'+(mins%60)).slice(-2)); mins += 30; }
+    return out;
+  }
+
+  function renderRsCalendar() {
+    var v = rs.viewMonth;
+    var year = v.getFullYear(), month = v.getMonth();
+    rsMonth.textContent = MONTHS[month] + ' ' + year;
+    var first = new Date(year, month, 1);
+    var offset = (first.getDay() + 6) % 7;
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
+    var today = new Date(); today.setHours(0,0,0,0);
+    var todayStr = isoDate(today);
+    rsGrid.innerHTML = '';
+    for (var i = 0; i < offset; i++) {
+      var e = document.createElement('div'); e.className = 'pick-day is-empty'; rsGrid.appendChild(e);
+    }
+    for (var d = 1; d <= daysInMonth; d++) {
+      var dt = new Date(year, month, d);
+      var iso = isoDate(dt);
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'pick-day'; btn.textContent = d;
+      var isPast = dt < today;
+      var noSlots = !(rs.slotsByDate[iso] && rs.slotsByDate[iso].length);
+      if (isPast || noSlots) btn.classList.add('is-disabled');
+      if (iso === todayStr) btn.classList.add('is-today');
+      if (rs.selectedDate === iso) btn.classList.add('is-selected');
+      (function(dateIso, dt2, blocked) {
+        btn.addEventListener('click', function() {
+          if (blocked) return;
+          rs.selectedDate = dateIso;
+          rs.selectedTime = null;
+          renderRsCalendar();
+          renderRsTimes();
+        });
+      })(iso, dt, isPast || noSlots);
+      rsGrid.appendChild(btn);
+    }
+  }
+  function renderRsTimes() {
+    if (!rs.selectedDate) { rsTimesWrap.style.display = 'none'; return; }
+    rsTimesWrap.style.display = 'block';
+    var avail = (rs.slotsByDate[rs.selectedDate] || []).slice().sort();
+    var slotsNeeded = Math.max(1, Math.ceil(rs.durationMin / 30));
+    var set = {}; avail.forEach(function(t) { set[t] = true; });
+    var valid = avail.filter(function(start) {
+      var req = consecutiveTimes(start, slotsNeeded);
+      for (var k = 0; k < req.length; k++) if (!set[req[k]]) return false;
+      return true;
+    });
+    var dt = new Date(rs.selectedDate + 'T00:00:00');
+    var label = DAYS[dt.getDay()] + ', ' + MONTHS[dt.getMonth()] + ' ' + dt.getDate() + '.';
+    rsTimesLabel.innerHTML = label + ' — válassz egy <b>' + rs.durationMin + ' perces</b> sávot';
+    rsTimes.innerHTML = '';
+    if (!valid.length) {
+      rsTimes.innerHTML = '<div class="pick-empty">Erre a napra nincs ' + rs.durationMin + ' perces szabad sáv.</div>';
+      rsConfirm.disabled = true;
+      return;
+    }
+    valid.forEach(function(t) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'pick-time'; b.textContent = t;
+      if (rs.selectedTime === t) b.classList.add('is-selected');
+      b.addEventListener('click', function() {
+        rs.selectedTime = t;
+        renderRsTimes();
+        rsConfirm.disabled = false;
+      });
+      rsTimes.appendChild(b);
+    });
+    rsConfirm.disabled = !rs.selectedTime;
+  }
+
+  rsConfirm.addEventListener('click', function() {
+    if (!rs.selectedDate || !rs.selectedTime) return;
+    rsConfirm.disabled = true; rsConfirm.textContent = 'Küldés folyamatban...';
+    fetch(BACKEND_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'rescheduleSelf', id: booking.bookingId, t: TOKEN, date: rs.selectedDate, time: rs.selectedTime })
+    }).then(function(r) { return r.json(); }).then(function(j) {
+      if (!j.ok) throw new Error(j.error || 'Hiba');
+      booking.status = 'pending';
+      booking.date = rs.selectedDate;
+      booking.time = rs.selectedTime;
+      var dt = new Date(rs.selectedDate + 'T00:00:00');
+      booking.dateLabel = DAYS[dt.getDay()] + ', ' + MONTHS[dt.getMonth()] + ' ' + dt.getDate() + '. · ' + rs.selectedTime;
+      // Update summary
+      summary.querySelector('.status-pill').className = 'status-pill status-pending';
+      summary.querySelector('.status-pill').textContent = 'Jóváhagyásra vár';
+      var dds = summary.querySelectorAll('dd');
+      if (dds[2]) dds[2].textContent = booking.dateLabel;
+      messages.innerHTML = '<div class="note note--ok">✓ Új időpont elküldve. Alice rövidesen jóváhagyja vagy jelzi, ha nem alkalmas. Visszaigazoló e-mailt küldök.</div>';
+      mainActions.innerHTML = '';
+      showPane('main');
+    }).catch(function(e) {
+      rsConfirm.disabled = false; rsConfirm.textContent = 'Új időpont megerősítése';
+      messages.innerHTML = '<div class="note note--bad">Hiba: ' + esc(e.message || 'Ismeretlen hiba') + '</div>';
+    });
+  });
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+})();
+</script>
+</body>
+</html>
