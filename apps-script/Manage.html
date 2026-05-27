@@ -194,8 +194,10 @@
 
 <script>
 (function() {
-  var BACKEND_URL = <?= JSON.stringify(backendUrl) ?>;
-  var TOKEN = <?= JSON.stringify(token) ?>;
+  // All server communication goes through google.script.run (no HTTP fetches
+  // — the manage page lives inside the Apps Script iframe, so direct server
+  // calls bypass all CORS/URL/redirect edge cases).
+  var TOKEN = '<?!= token ?>';
   var booking = <?!= bookingJson ?>;
   var MONTHS = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
   var DAYS = ['Vasárnap','Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat'];
@@ -306,32 +308,19 @@
     renderRsCalendar();
   });
 
-  function safeGetJson(url) {
-    return fetch(url).then(function(r) {
-      return r.text().then(function(text) {
-        var trimmed = (text || '').trim();
-        if (!trimmed) throw new Error('Üres válasz');
-        if (trimmed.charAt(0) === '<') {
-          throw new Error('Elavult szerver — kérlek hívj: <?= businessPhone ?>');
-        }
-        try { return JSON.parse(trimmed); }
-        catch (e) { throw new Error('Hibás válasz a szervertől'); }
-      });
-    });
-  }
-
   function loadSlotsForReschedule() {
-    Promise.all([
-      safeGetJson(BACKEND_URL + '?action=slots'),
-      safeGetJson(BACKEND_URL + '?action=services')
-    ]).then(function(arr) {
-      var slotsJ = arr[0], svcJ = arr[1];
+    new Promise(function(resolve, reject) {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(function(err) { reject(new Error((err && err.message) || 'Szerverhiba')); })
+        .manageGetData();
+    }).then(function(data) {
       rs.slotsByDate = {};
-      (slotsJ.slots || []).forEach(function(s) {
+      (data.slots || []).forEach(function(s) {
         if (!rs.slotsByDate[s.date]) rs.slotsByDate[s.date] = [];
         rs.slotsByDate[s.date].push(s.time);
       });
-      var svc = (svcJ.services || []).filter(function(s) { return s.key === booking.service; })[0];
+      var svc = (data.services || []).filter(function(s) { return s.key === booking.service; })[0];
       if (svc) rs.durationMin = svc.durationMin || 60;
       renderRsCalendar();
     }).catch(function(e) {

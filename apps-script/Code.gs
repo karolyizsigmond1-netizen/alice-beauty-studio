@@ -860,7 +860,6 @@ function serveManagePage_(bookingId, token) {
   });
   tpl.businessName = CONFIG.businessName;
   tpl.businessPhone = CONFIG.businessPhone;
-  tpl.backendUrl = webAppUrl_();
   tpl.token = token;
   return tpl.evaluate()
     .setTitle('Foglalás kezelése · ' + CONFIG.businessName)
@@ -881,6 +880,14 @@ function customerReschedule(body) {
     throw new Error('customerReschedule: missing payload (got ' + (typeof body) + '). Cannot be run manually from the editor — only via the manage page.');
   }
   return customerReschedule_(body);
+}
+// Used by the manage page to load fresh slots/services without
+// going through HTTP at all — sidesteps all the URL/CORS edge cases.
+function manageGetData() {
+  return {
+    services: getServices_(),
+    slots: getPublicSlots_()
+  };
 }
 
 /** POST handler: customer cancels their own booking with optional reason. */
