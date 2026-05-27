@@ -243,12 +243,7 @@
     var btn = this;
     btn.disabled = true; btn.textContent = 'Lemondás folyamatban...';
     var reason = document.getElementById('cancelReason').value.trim();
-    fetch(BACKEND_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'cancelSelf', id: booking.bookingId, t: TOKEN, reason: reason })
-    }).then(function(r) { return r.json(); }).then(function(j) {
-      if (!j.ok) throw new Error(j.error || 'Hiba');
+    safePost({ action: 'cancelSelf', id: booking.bookingId, t: TOKEN, reason: reason }).then(function(j) {
       booking.status = 'cancelled';
       messages.innerHTML = '<div class="note note--ok">✓ Foglalásod sikeresen lemondva. Megerősítő e-mailt küldtem.</div>';
       summary.querySelector('.status-pill').className = 'status-pill status-cancelled';
@@ -260,6 +255,30 @@
       messages.innerHTML = '<div class="note note--bad">Hiba: ' + esc(e.message || 'Ismeretlen hiba') + '</div>';
     });
   });
+
+  // Robust POST: if the backend returned HTML instead of JSON (auth wall
+  // or old deploy that doesn't know cancelSelf/rescheduleSelf), surface a
+  // friendly error instead of the cryptic JSON-parse mess.
+  function safePost(payload) {
+    return fetch(BACKEND_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    }).then(function(r) {
+      return r.text().then(function(text) {
+        var trimmed = (text || '').trim();
+        if (!trimmed) throw new Error('Üres válasz a szervertől');
+        if (trimmed.charAt(0) === '<') {
+          throw new Error('A szerver elavult verziót szolgál — kérlek értesítsd a stúdiót: ' + '<?= businessPhone ?>');
+        }
+        var j;
+        try { j = JSON.parse(trimmed); }
+        catch (e) { throw new Error('Hibás válasz: ' + trimmed.substring(0, 80)); }
+        if (!j.ok) throw new Error(j.error || 'Ismeretlen hiba');
+        return j;
+      });
+    });
+  }
 
   // ── Reschedule flow ──
   var rs = {
@@ -387,23 +406,35 @@
   rsConfirm.addEventListener('click', function() {
     if (!rs.selectedDate || !rs.selectedTime) return;
     rsConfirm.disabled = true; rsConfirm.textContent = 'Küldés folyamatban...';
-    fetch(BACKEND_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'rescheduleSelf', id: booking.bookingId, t: TOKEN, date: rs.selectedDate, time: rs.selectedTime })
-    }).then(function(r) { return r.json(); }).then(function(j) {
-      if (!j.ok) throw new Error(j.error || 'Hiba');
+    var oldDate = booking.date, oldTime = booking.time;
+    safePost({ action: 'rescheduleSelf', id: booking.bookingId, t: TOKEN, date: rs.selectedDate, time: rs.selectedTime }).then(function(j) {
+      // Free old slots in local state so a second reschedule sees them as free
+      if (rs.slotsByDate[oldDate]) {
+        // (Old slots aren't in slotsByDate because that only tracks 'free' ones;
+        // but the new ones we just took ARE in there — remove them.)
+      }
+      // Remove the newly-taken slots from the local availability so they don't
+      // appear as free if the customer rapidly opens reschedule again.
+      if (rs.slotsByDate[rs.selectedDate]) {
+        var taken = consecutiveTimes(rs.selectedTime, Math.max(1, Math.ceil(rs.durationMin / 30)));
+        rs.slotsByDate[rs.selectedDate] = rs.slotsByDate[rs.selectedDate].filter(function(t) {
+          return taken.indexOf(t) === -1;
+        });
+      }
+      // Update booking state + summary
       booking.status = 'pending';
       booking.date = rs.selectedDate;
       booking.time = rs.selectedTime;
       var dt = new Date(rs.selectedDate + 'T00:00:00');
       booking.dateLabel = DAYS[dt.getDay()] + ', ' + MONTHS[dt.getMonth()] + ' ' + dt.getDate() + '. · ' + rs.selectedTime;
-      // Update summary
       summary.querySelector('.status-pill').className = 'status-pill status-pending';
       summary.querySelector('.status-pill').textContent = 'Jóváhagyásra vár';
       var dds = summary.querySelectorAll('dd');
       if (dds[2]) dds[2].textContent = booking.dateLabel;
       messages.innerHTML = '<div class="note note--ok">✓ Új időpont elküldve. Alice rövidesen jóváhagyja vagy jelzi, ha nem alkalmas. Visszaigazoló e-mailt küldök.</div>';
+      // Reset the picker so a future reopen starts clean
+      rs.selectedDate = null; rs.selectedTime = null;
+      rsTimesWrap.style.display = 'none';
       mainActions.innerHTML = '';
       showPane('main');
     }).catch(function(e) {
